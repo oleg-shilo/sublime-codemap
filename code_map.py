@@ -222,7 +222,8 @@ class synch_code_map(sublime_plugin.TextCommand):
                 else:
                     prev_member_line_num = member_line_num
                     prev_map_line = line
-                       map_view.sel().clear()
+                    
+            map_view.sel().clear()
             map_view.sel().add(prev_map_line)
             map_view.show_at_center(prev_map_line)
             map_view.window().focus_view(map_view)
