@@ -1,0 +1,6 @@
+[
+    { "keys": ["alt+m", "alt+m"], "command": "show_code_map" },
+    { "keys": ["alt+m", "alt+f"], "command": "synch_code_map" }
+    // { "keys": ["alt+m"], "command": "show_code_map" },
+    // { "keys": ["shift+alt+m"], "command": "synch_code_map" }
+]

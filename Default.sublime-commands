@@ -1,0 +1,10 @@
+[
+    {
+        "caption": "CodeMap: Toggle Visibility",
+        "command": "show_code_map"
+    },
+    {
+        "caption": "CodeMap: Synch with View",
+        "command": "synch_code_map"
+    }
+]
