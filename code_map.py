@@ -199,7 +199,7 @@ class synch_code_map(sublime_plugin.TextCommand):
     def run(self, edit):
         map_view = get_code_map_view()
         
-        if map_view:
+        if map_view and len(map_view.sel()) > 0:
             code_view_line, _ = self.view.rowcol(self.view.sel()[0].begin())
 
             prev_member_line_num = 0
@@ -217,18 +217,17 @@ class synch_code_map(sublime_plugin.TextCommand):
                     continue
                 
                 if member_line_num and member_line_num > code_view_line:
-                    map_view.sel().clear()
-                    map_view.sel().add(prev_map_line)
-                    map_view.show_at_center(prev_map_line)
-                    map_view.window().focus_view(map_view)
-                    scroll_to_left.code_map_view(self.view)
                     break
 
                 else:
                     prev_member_line_num = member_line_num
                     prev_map_line = line
+                       map_view.sel().clear()
+            map_view.sel().add(prev_map_line)
+            map_view.show_at_center(prev_map_line)
+            map_view.window().focus_view(map_view)
+            scroll_to_left.code_map_view(self.view)
 
-            pass  
 # ===============================================================================
 class show_code_map(sublime_plugin.TextCommand):
     # -----------------
