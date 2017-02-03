@@ -21,7 +21,7 @@ The plugin uses a dedicated view group __Code - Map__ (on right side) to mimic a
 
 The code tree automatically refrees on saving the active document or switching the tabs. The usage is quite simple. You can double-click a node in the code tree and this will trigger navigation to the corresponding area in the code (in active document). Alternatively you can synchronise code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from _Command Pallete_ or by the configured shortcut.
 
-![](images/demo_1.gif)
+![](images/image1.gif)
 
 ## Command Palette
 
