@@ -8,7 +8,7 @@
 # In order to activate the mapper its script meeds to be mapped to the supported file type (extension) in the 
 # .sublime-settings file:
 # "codemap_<extension>_mapper": "<path to the script implementing the mapper>"
-#   Example: "codemap_txt_mapper": "./custom_mappers/code_map.py.txt",
+#   Example: "codemap_txt_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.txt.py",
 
 import codecs
 
@@ -18,7 +18,6 @@ def generate(file):
 class txt_mapper():
 
     def generate(file):
-
         map = ''
 
         try:
@@ -45,3 +44,7 @@ class txt_mapper():
             print (err)
 
         return map
+
+
+
+        

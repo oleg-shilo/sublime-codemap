@@ -57,6 +57,10 @@ class event_listener(sublime_plugin.EventListener):
                 view.window().focus_view(soucre_view)
                 set_syntax(view, 'Python')
     # -----------------
+    def on_load(self, view): 
+        if view.file_name() != code_map_file():
+            refresh_map_for(view)
+    # -----------------
     def on_close(self, view): 
         groups = sublime.active_window().num_groups()
         if groups > 1 and len(sublime.active_window().views_in_group(1)) == 0:
