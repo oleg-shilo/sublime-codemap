@@ -30,6 +30,16 @@ Press `cmd+shift+p`. Type `codemap` to see the available commands:
 * *Toggle Visibility* - Jump to the next highlighted error or warning in your code.
 * *Synch with View* - Select code tree mode that corresponds the caret position in the code (active viewJ)
 
-## Settings
+## Custom mapping
 
-Currently there is no any settings for the plugin.
+You can extend the built-in functionality with custom mappers. Custom mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure. 
+
+You can find the [code_map.txt.py](custom_mappers/code_map.txt.py) sample in the source code. This mapper builds the list of paragraphs (new lines) in the given text file.
+In order to activate the mapper its script meeds to be mapped to the supported file type (extension) in the *.sublime-settings file:
+`"codemap_<extension>_mapper": "<path to the script implementing the mapper>"`
+
+  Example: `"codemap_txt_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.txt.py"`
+   
+
+## Settings
+Currently there is no any settings for the plugin except `codemap_<extension>_mapper` described in the section above.
