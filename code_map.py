@@ -120,15 +120,34 @@ class event_listener(sublime_plugin.EventListener):
                         sublime.active_window().focus_view(source_code_view)
 
 # ===============================================================================
+from importlib.machinery import SourceFileLoader
 class code_map_generator(sublime_plugin.TextCommand):
     # -----------------
     source = None
     positions = {}
     # -----------------
+    def get_maper(file):
+        if file:
+            if file.lower().endswith('.py'):
+                return python_mapper.generate
+
+            if file.lower().endswith('.cs') and 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
+                return csharp_mapper.generate
+
+            try:
+                pre, ext = os.path.splitext(file)
+                extension = ext[1:].lower() 
+
+                script = sublime.active_window().active_view().settings().get('codemap_'+extension+'_mapper', None)
+                if script:
+                    mapper = SourceFileLoader(extension+"_mapper", script).load_module()
+                    return mapper.generate
+
+            except Exception as e:
+                print(e)
+
     def can_map(file):
-        return file and \
-                   (file.lower().endswith('.py') or \
-                   (file.lower().endswith('.cs') and 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys()))
+        return code_map_generator.get_maper(file) != None
     # -----------------
     def run(self, edit, **args):
         code_map_view = self.view
@@ -149,12 +168,8 @@ class code_map_generator(sublime_plugin.TextCommand):
         map = ""
 
         try:
-
-            if  source.lower().endswith('.cs'):
-                map = csharp_mapper.generate(source)
-
-            elif source.lower().endswith('.py'):
-                map = python_mapper.generate(source)
+            generate = code_map_generator.get_maper(source)
+            map = generate(source)
 
         except Exception as err:
             print ('code_map.generate:', err)
