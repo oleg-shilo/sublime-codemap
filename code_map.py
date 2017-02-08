@@ -171,7 +171,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         source = args['source']
         map = ""
 
-        try:
+        try: 
             generate = code_map_generator.get_maper(source)
             map = generate(source)
 

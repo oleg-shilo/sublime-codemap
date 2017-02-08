@@ -14,6 +14,11 @@ At this stage the pluging is not available via Package Control. Though it is goi
 
 *__Manual__*
 
+* Remove the package, if installed, using Package Control.
+* Add a repository: `https://github.com/oleg-shilo/sublime-codemap.git`
+* Install `sublime-codemap` with Package Control. 
+* Restart Sublime editor if required
+
 You can install the plugin by cloning `sublime-codemap` repository into your Packages folder or manually placing the download package there.
 
 ## Usage
@@ -27,8 +32,8 @@ The code tree automatically refreshes on saving the active document or switching
 
 Press `cmd+shift+p`. Type `codemap` to see the available commands:
 
-* *Toggle Visibility* - Jump to the next highlighted error or warning in your code.
-* *Synch with View* - Select code tree mode that corresponds the caret position in the code (active viewJ)
+* *Toggle Visibility* - Show/Hide CodeMap view.
+* *Reveal in CodeMap* - Select code tree node that corresponds the caret position in the code (active view)
 
 ## Custom mapping
 
