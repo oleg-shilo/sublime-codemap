@@ -1,0 +1,4 @@
+Features:
+
+1. Navigate to the double-clicked item in Code-Map view.
+2. Highlight in Code-Map view the item, which corresponds to the current selection (caret) in the document (code) view 

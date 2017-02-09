@@ -1,0 +1,4 @@
+Welcome to CodeMap!
+
+For more information see the README.md at https://github.com/oleg-shilo/sublime-codemap
+
