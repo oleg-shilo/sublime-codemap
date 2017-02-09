@@ -1,4 +1,16 @@
 Welcome to CodeMap!
 
 For more information see the README.md at https://github.com/oleg-shilo/sublime-codemap
+---------------------------------------------------------------------------------------
+Sublime CodeMap is a plugin for displaying the code tree structure (code map) of the active view content in the Sublime Text 3.
 
+This plugin is a port of PyMap Visual Studio extension.
+
+Plugin currently supports building the code tree for Python. Support for C# is in the pipeline. The design of plugin allows integration of the user defined tree building algorithm for other languages. The custom syntax integration sample is available from GitHub (https://github.com/oleg-shilo/sublime-codemap) and described in the README.md.
+
+Usage
+The plugin uses a dedicated view group Code - Map (on right side) to mimic a "side bar" with the content (code tree). 
+
+The code tree automatically refreshes on saving the active document or switching the tabs. The usage is quite simple. You can double-click a node in the code tree and this will trigger navigation to the corresponding area in the code (in active document). Alternatively you can synchronize code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from Command Palette or by the configured shortcut.
+
+To start working with CodeMap just make the map view visible (e.g. [alt+m, alt+m]) and set the focus to the code view.

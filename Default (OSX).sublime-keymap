@@ -1,3 +1,4 @@
 [
-    { "keys": ["alt+m"], "command": "show_code_map" }
+    { "keys": ["alt+m", "alt+m"], "command": "show_code_map" },
+    { "keys": ["alt+m", "alt+f"], "command": "synch_code_map" }
 ]

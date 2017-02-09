@@ -11,6 +11,8 @@ import subprocess
 import errno
 from socket import error as socket_error
 
+# version = 1.0.0
+
 # ============================================================
 def code_map_file():
     plugin_dir = os.path.dirname(__file__)
