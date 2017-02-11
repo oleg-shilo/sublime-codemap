@@ -10,7 +10,7 @@ Plugin currently supports building the code tree for Python. Support for C# is i
 
 *__Package Control__*
 
-At this stage the pluging is not available via Package Control. Though it is going to happen very soon.
+Currently the pluging is being evaluated by the Package Control team and it is expected to become available  via Package Control very soon. 
 
 *__Manual__*
 
@@ -19,7 +19,7 @@ At this stage the pluging is not available via Package Control. Though it is goi
 * Install `sublime-codemap` with Package Control. 
 * Restart Sublime editor if required
 
-You can install the plugin by cloning `sublime-codemap` repository into your Packages folder or manually placing the download package there.
+You can also install the plugin by cloning `sublime-codemap` repository into your Packages folder or manually placing the download package there.
 
 ## Usage
 The plugin uses a dedicated view group __Code - Map__ (on right side) to mimic a "side bar" with the content (code tree) that represents code structure of the active view content in the primary view group. 
