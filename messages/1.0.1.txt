@@ -1,0 +1,3 @@
+Features:
+
+1. Added setting focus back to active view on `show_code_map` command
