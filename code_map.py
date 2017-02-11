@@ -270,7 +270,14 @@ class show_code_map(sublime_plugin.TextCommand):
             code_map_view.settings().set("word_wrap", False)
             sublime.active_window().set_view_index(code_map_view, 1, 0)
             code_map_view.sel().clear()
-
+        
+            code_map_view.window().focus_view(code_map_view)
+            
+            def focus_source_code():
+                original_focus.window().focus_view(original_focus)
+            
+            sublime.set_timeout_async(focus_source_code, 100)   
+                
         else:
             code_map_view.window().focus_view(code_map_view)
             code_map_view.window().run_command("close_file")
