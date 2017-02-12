@@ -1,12 +1,14 @@
 # Sublime CodeMap
 
-A plugin for displaying the code map (code structure tree) in the [Sublime Text](http://sublimetext.com "Sublime Text") editor.
+A plugin for displaying the code map (code structure tree) in the [Sublime Text 3](http://sublimetext.com "Sublime Text") editor.
 
 This plugin is a port of [PyMap](https://marketplace.visualstudio.com/items?itemName=OlegShilo.PyMap) Visual Studio extension. 
 
 Plugin currently supports building the code tree for Python. Support for C# is in the pipeline. The design of plugin allows integration of the user defined _tree building_ algorithm for other languages. The _custom syntax_ integration infrastructure and and samples will  be available in the next release. 
 
 ## Installation
+
+Note the plugin was developed and tested against ST3 but not ST2.
 
 *__Package Control__*
 
