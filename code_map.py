@@ -11,7 +11,7 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.1
+# version = 1.0.2
 
 # ============================================================
 def code_map_file():
@@ -45,7 +45,7 @@ def refresh_map_for(view):
             code_map_view.run_command('code_map_generator', {"source": file})
 # -----------------
 def set_syntax(view, language):
-    view.run_command("set_file_type", {"syntax": 'Packages/'+language+'/'+language+'.tmLanguage'})
+    view.assign_syntax('Packages/'+language+'/'+language+'.tmLanguage')
     
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
@@ -57,6 +57,7 @@ class event_listener(sublime_plugin.EventListener):
 
             if soucre_view and code_map_generator.can_map(soucre_view.file_name()):
                 view.window().focus_view(soucre_view)
+                # syntax highlight does not render unless it is set to the focused view
                 set_syntax(view, 'Python')
     # -----------------
     def on_load(self, view): 
@@ -255,8 +256,7 @@ class show_code_map(sublime_plugin.TextCommand):
     # -----------------
     def run(self, edit): 
         groups = sublime.active_window().num_groups()
-        original_focus = sublime.active_window().active_view() # note current focused view
-
+        
         code_map_view = get_code_map_view()
 
         if not code_map_view:
@@ -271,11 +271,8 @@ class show_code_map(sublime_plugin.TextCommand):
             sublime.active_window().set_view_index(code_map_view, 1, 0)
             code_map_view.sel().clear()
         
-            code_map_view.window().focus_view(code_map_view)
-            
             def focus_source_code():
-                original_focus.window().focus_view(original_focus)
-            
+                sublime.active_window().focus_group(0)
             sublime.set_timeout_async(focus_source_code, 100)   
                 
         else:
@@ -336,7 +333,7 @@ class python_mapper():
                 info = None
                 indent_level = len(line) - len(code_line);
 
-                if code_line.startswith('class'):
+                if code_line.startswith('class '):
                     last_type = 'class'
                     last_indent = indent_level
                     info = (line_num, 
@@ -344,7 +341,7 @@ class python_mapper():
                             line.split('(')[0].split(':')[0].rstrip(), 
                             indent_level) 
 
-                elif code_line.startswith('def'):
+                elif code_line.startswith('def '):
                     if last_type == 'def' and indent_level > last_indent:
                         continue #local def
                     last_type = 'def'
