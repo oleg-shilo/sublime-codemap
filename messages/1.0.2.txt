@@ -1,0 +1,7 @@
+Features:
+
+1. Added support for multi column layout.
+2. Added plugin specific settings (code_map.sublime-settings). 
+3. Added main menu Preferences->Package Settings->CodeMap. 
+
+The CodeMap view is always placed in the most right column (group) of the active window. If the layout has only a single column then the plugin automatically switches in the "2-columns" layout. You can also configure plugin (via setting 'close_empty_group_on_closing_map') to hide the group on closing the CodeMap view when it is the only view in the group.

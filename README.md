@@ -36,7 +36,9 @@ To start working with CodeMap just make the map view visible (e.g. [alt+m, alt+m
 
 Press `cmd+shift+p`. Type `codemap` to see the available commands:
 
-* *Toggle Visibility* - Show/Hide CodeMap view.
+* *Toggle Visibility* - Show/Hide CodeMap view. 
+The CodeMap view is always placed in the most right column (group) of the active window. If the layout has only a single column then the plugin automatically switches in the "2-columns" layout. You can also configure plugin (via setting 'close_empty_group_on_closing_map') to hide the group on closing the CodeMap view when it is the only view in the group.
+
 * *Reveal in CodeMap* - Select code tree node that corresponds the caret position in the code (active view)
 
 ## Custom mapping
@@ -44,11 +46,20 @@ Press `cmd+shift+p`. Type `codemap` to see the available commands:
 You can extend the built-in functionality with custom mappers. Custom mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure. 
 
 You can find the [code_map.txt.py](custom_mappers/code_map.txt.py) sample in the source code. This mapper builds the list of paragraphs (new lines) in the given text file.
-In order to activate the mapper its script meeds to be mapped to the supported file type (extension) in the *.sublime-settings file:
+In order to activate the mapper its script needs to be mapped to the supported file type (extension) in the _code_\__map.sublime-settings_ file:
 `"codemap_<extension>_mapper": "<path to the script implementing the mapper>"`
 
   Example: `"codemap_txt_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.txt.py"`
    
 
 ## Settings
-Currently there is no any settings for the plugin except `codemap_<extension>_mapper` described in the section above.
+
+You can also configure plugin to hide the group on closing the CodeMap view when it is the only view in the group.
+
+_code_\__map.sublime-settings_
+
+```js
+{
+    "close_empty_group_on_closing_map": true, 
+}
+```

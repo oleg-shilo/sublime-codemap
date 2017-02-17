@@ -14,6 +14,9 @@ from socket import error as socket_error
 # version = 1.0.2
 
 # ============================================================
+def settings():
+    return sublime.load_settings("code_map.sublime-settings")
+# -------------------------
 def code_map_file():
     plugin_dir = os.path.dirname(__file__)
     data_dir = path.join(plugin_dir, 'CodeMap.Data', str(sublime.active_window().id()))
@@ -22,10 +25,18 @@ def code_map_file():
     return path.join(data_dir, 'Code - Map')
 # -----------------
 def set_layout_columns(count, coll_width=0.75):
+
     if count == 1:
         sublime.active_window().run_command("set_layout", {"cells": [[0, 0, 1, 1]], "cols": [0.0, 1.0], "rows": [0.0, 1.0]})
+
     elif count == 2:
-        sublime.active_window().run_command("set_layout", {"cells": [[0, 0, 1, 1], [1, 0, 2, 1]], "cols": [0.0, coll_width, 1.0], "rows": [0.0, 1.0]})
+         sublime.active_window().run_command("set_layout", {"cells": [[0, 0, 1, 1], [1, 0, 2, 1]], "cols": [0.0, coll_width, 1.0], "rows": [0.0, 1.0]})
+
+    elif count == 3:
+         sublime.active_window().run_command("set_layout", {"cells": [[0, 0, 1, 1], [1, 0, 2, 1], [2, 0, 3, 1]], "cols": [0.0, 0.33, 0.66, 1.0], "rows": [0.0, 1.0]})
+
+    elif count == 4:
+         sublime.active_window().run_command("set_layout", {"cells": [[0, 0, 1, 1], [1, 0, 2, 1], [2, 0, 3, 1], [3, 0, 4, 1]], "cols": [0.0, 0.25, 0.5, 0.75, 1.0], "rows": [0.0, 1.0]})
 # -----------------
 def centre_line_of(view, region):
     (first_row,c) = view.rowcol(region.begin())
@@ -50,6 +61,7 @@ def set_syntax(view, language):
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
     map_view_next_focus = None
+    map_closed_group = -1
     # -----------------
     def on_load(self, view): 
         if view.file_name() == code_map_file():
@@ -64,10 +76,24 @@ class event_listener(sublime_plugin.EventListener):
         if view.file_name() != code_map_file():
             refresh_map_for(view)
     # -----------------
-    def on_close(self, view): 
-        groups = sublime.active_window().num_groups()
-        if groups > 1 and len(sublime.active_window().views_in_group(1)) == 0:
-            set_layout_columns(1)
+    def on_pre_close(self, view):
+        if view.file_name() == code_map_file():
+            event_listener.map_closed_group, x = sublime.active_window().get_view_index(view)
+            pass
+    # -----------------
+    def on_close(self, view):
+
+        enabled = settings().get('close_empty_group_on_closing_map', False)
+
+        if enabled and view.file_name() == code_map_file() and event_listener.map_closed_group != -1:
+            group = event_listener.map_closed_group 
+            groups = sublime.active_window().num_groups()
+            views_in_group = len(sublime.active_window().views_in_group(group))
+
+            if groups > 1 and views_in_group == 0:
+                set_layout_columns(groups-1)
+
+        event_listener.map_closed_group = -1
     # -----------------
     def on_activated(self, view):
         if view.file_name() == code_map_file():
@@ -256,23 +282,40 @@ class show_code_map(sublime_plugin.TextCommand):
     # -----------------
     def run(self, edit): 
         groups = sublime.active_window().num_groups()
+        current_group = sublime.active_window().active_group()
+        current_view = self.view
         
         code_map_view = get_code_map_view()
 
         if not code_map_view:
+            code_map_group = 1
+            
             if groups == 1:
-                set_layout_columns(2) 
+                set_layout_columns(2)
+                groups = sublime.active_window().num_groups()
 
+            if groups == 2:
+                code_map_group = 1 
+
+            elif groups == 3:
+                code_map_group = 2 
+
+            elif groups == 4:
+                code_map_group = 3 
+            
             with open(code_map_file(), "w") as file: 
                 file.write('')
             
             code_map_view = sublime.active_window().open_file(code_map_file())
             code_map_view.settings().set("word_wrap", False)
-            sublime.active_window().set_view_index(code_map_view, 1, 0)
+            sublime.active_window().set_view_index(code_map_view, code_map_group, 0)
             code_map_view.sel().clear()
         
             def focus_source_code():
-                sublime.active_window().focus_group(0)
+                print("focus on group", current_group)
+                sublime.active_window().focus_group(current_group)
+                sublime.active_window().focus_view(current_view)
+
             sublime.set_timeout_async(focus_source_code, 100)   
                 
         else:
