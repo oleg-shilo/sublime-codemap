@@ -312,7 +312,6 @@ class show_code_map(sublime_plugin.TextCommand):
             code_map_view.sel().clear()
         
             def focus_source_code():
-                print("focus on group", current_group)
                 sublime.active_window().focus_group(current_group)
                 sublime.active_window().focus_view(current_view)
 
