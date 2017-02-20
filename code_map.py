@@ -18,8 +18,8 @@ def settings():
     return sublime.load_settings("code_map.sublime-settings")
 # -------------------------
 def code_map_file():
-    plugin_dir = os.path.dirname(__file__)
-    data_dir = path.join(plugin_dir, 'CodeMap.Data', str(sublime.active_window().id()))
+    plugin_dir = sublime.cache_path()
+    data_dir = path.join(plugin_dir, 'CodeMap', 'CodeMap.Data', str(sublime.active_window().id()))
     if not path.exists(data_dir):
         os.makedirs(data_dir)
     return path.join(data_dir, 'Code - Map')
