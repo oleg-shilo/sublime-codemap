@@ -171,7 +171,7 @@ class code_map_generator(sublime_plugin.TextCommand):
                 pre, ext = os.path.splitext(file)
                 extension = ext[1:].lower() 
 
-                script = sublime.active_window().active_view().settings().get('codemap_'+extension+'_mapper', None)
+                script = settings().get('codemap_'+extension+'_mapper', None)
                 if script:
                     mapper = SourceFileLoader(extension+"_mapper", script).load_module()
                     return mapper.generate
