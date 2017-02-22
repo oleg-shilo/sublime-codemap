@@ -14,6 +14,10 @@ from socket import error as socket_error
 # version = 1.0.4   
 
 # ============================================================
+py_syntax = 'Packages/Python/Python.tmLanguage'
+md_syntax = 'Packages/Text/Plain text.tmLanguage'
+cs_syntax = 'Packages/C#/C#.tmLanguage'
+
 def settings():
     return sublime.load_settings("code_map.sublime-settings")
 # -------------------------
@@ -53,24 +57,11 @@ def refresh_map_for(view):
     if code_map_generator.can_map(file):
         code_map_view = get_code_map_view()
         if code_map_view:
-            code_map_view.run_command('code_map_generator', {"source": file})
-# -----------------
-def set_syntax(view, language):
-    view.assign_syntax('Packages/'+language+'/'+language+'.tmLanguage')
-    
+            code_map_view.run_command('code_map_generator', {"source": file })
+
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
-    map_view_next_focus = None
     map_closed_group = -1
-    # -----------------
-    def on_load(self, view): 
-        if view.file_name() == code_map_file():
-            soucre_view = view.window().active_view_in_group(0)
-
-            if soucre_view and code_map_generator.can_map(soucre_view.file_name()):
-                view.window().focus_view(soucre_view)
-                # syntax highlight does not render unless it is set to the focused view
-                set_syntax(view, 'Python')
     # -----------------
     def on_load(self, view): 
         if view.file_name() != code_map_file():
@@ -94,11 +85,6 @@ class event_listener(sublime_plugin.EventListener):
                 set_layout_columns(groups-1)
 
         event_listener.map_closed_group = -1
-    # -----------------
-    def on_activated(self, view):
-        if view.file_name() == code_map_file():
-            # Python syntax highlight just happens to be very suitable for the code map content
-            set_syntax(view, 'Python')
     # -----------------
     def on_post_save_async(self, view): 
         refresh_map_for(view)
@@ -160,12 +146,13 @@ class code_map_generator(sublime_plugin.TextCommand):
     positions = {}
     # -----------------
     def get_maper(file):
+        # Note that the default map syntax is Python. It just looks better then others
         if file:
             if file.lower().endswith('.py'):
-                return python_mapper.generate
+                return python_mapper.generate, py_syntax 
 
             if file.lower().endswith('.cs') and 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
-                return csharp_mapper.generate
+                return csharp_mapper.generate, py_syntax 
 
             try:
                 pre, ext = os.path.splitext(file)
@@ -174,7 +161,8 @@ class code_map_generator(sublime_plugin.TextCommand):
                 script = settings().get('codemap_'+extension+'_mapper', None)
                 if script:
                     mapper = SourceFileLoader(extension+"_mapper", script).load_module()
-                    return mapper.generate
+                    syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
+                    return mapper.generate, syntax
 
             except Exception as e:
                 print(e)
@@ -199,11 +187,13 @@ class code_map_generator(sublime_plugin.TextCommand):
         # generate new map 
         source = args['source']
         map = ""
+        map_syntax = py_syntax
 
         try: 
-            generate = code_map_generator.get_maper(source)
+            (generate, syntax) = code_map_generator.get_maper(source)
             map = generate(source)
-
+            map_syntax = syntax
+            
         except Exception as err:
             print ('code_map.generate:', err)
         
@@ -225,6 +215,8 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                 else:
                     code_map_view.sel().add(Region(0,0))
+
+        code_map_view.assign_syntax(map_syntax)
 
 # ===============================================================================
 class scroll_to_left(sublime_plugin.TextCommand):
