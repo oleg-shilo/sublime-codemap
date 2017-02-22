@@ -11,7 +11,7 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.4
+# version = 1.0.4   
 
 # ============================================================
 def settings():
