@@ -12,7 +12,7 @@ Note the plugin was developed and tested against ST3 but not ST2.
 
 *__Package Control__*
 
-Currently the pluging is being evaluated by the Package Control team and it is expected to become available  via Package Control very soon. 
+You can install the pluging [Package Control](https://packagecontrol.io/packages/CodeMap).
 
 *__Manual__*
 
