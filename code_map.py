@@ -13,8 +13,8 @@ from socket import error as socket_error
 
 # version = 1.0.5   
 
-# if sys.version_info < (3, 3):
-#     raise RuntimeError('CodeMap works with Sublime Text 3 only. At least at this stage.')
+if sys.version_info < (3, 3):
+    raise RuntimeError('CodeMap works with Sublime Text 3 only.')
 
 # ============================================================
 py_syntax = 'Packages/Python/Python.tmLanguage'
