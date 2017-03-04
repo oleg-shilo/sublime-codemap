@@ -11,7 +11,10 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.4   
+# version = 1.0.5   
+
+# if sys.version_info < (3, 3):
+#     raise RuntimeError('CodeMap works with Sublime Text 3 only. At least at this stage.')
 
 # ============================================================
 py_syntax = 'Packages/Python/Python.tmLanguage'
@@ -22,7 +25,15 @@ def settings():
     return sublime.load_settings("code_map.sublime-settings")
 # -------------------------
 def code_map_file():
-    plugin_dir = sublime.cache_path()
+    
+    plugin_dir = ''
+    
+    if hasattr(sublime, 'cache_path'):
+        plugin_dir = sublime.cache_path()
+    else:
+        plugin_dir = 'cache'
+        plugin_dir = os.path.join(os.getcwd(), plugin_dir)
+
     data_dir = path.join(plugin_dir, 'CodeMap', 'CodeMap.Data', str(sublime.active_window().id()))
     if not path.exists(data_dir):
         os.makedirs(data_dir)
