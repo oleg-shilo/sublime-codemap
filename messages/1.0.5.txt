@@ -1,0 +1,3 @@
+Features:
+
+1. Added informative print out for ST2 incompatibility.
