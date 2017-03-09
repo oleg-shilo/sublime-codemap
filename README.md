@@ -45,21 +45,24 @@ The CodeMap view is always placed in the most right column (group) of the active
 
 You can extend the built-in functionality with custom mappers. Custom mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure. 
 
-You can find the [code_map.txt.py](custom_mappers/code_map.txt.py) sample in the source code. This mapper builds the list of paragraphs (new lines) in the given text file.
+You can find the [code_map.md.py](custom_mappers/code_map.md.py) sample in the source code. This mapper builds the list of markdown sections in the given text file.
 In order to activate the mapper its script needs to be mapped to the supported file type (extension) in the _code_\__map.sublime-settings_ file:
 `"codemap_<extension>_mapper": "<path to the script implementing the mapper>"`
 
-  Example: `"codemap_txt_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.txt.py"`
+  Example: `"codemap_md_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.md.py"`
    
 
 ## Settings
 
-You can also configure plugin to hide the group on closing the CodeMap view when it is the only view in the group.
+You can also configure plugin to:
+1. Hide the group on closing the CodeMap view when it is the only view in the group.
+2. Always place CodeMap view in the individual most-right column. Only up to 4 columns layout is supported.
 
 _code_\__map.sublime-settings_
 
 ```js
 {
     "close_empty_group_on_closing_map": true, 
+    "show_in_new_group": true
 }
 ```

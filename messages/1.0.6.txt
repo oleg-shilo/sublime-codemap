@@ -1,0 +1,4 @@
+Features/Changes:
+
+1. Added `"show_in_new_group": true` setting, which controls if the CodeMap view is always placed in the individual most-right column. Only up to 4 columns layout is supported.
+2. Added removing from the CodeMap view unnecessary visual elements: line numbers, gutter and fold_buttons
