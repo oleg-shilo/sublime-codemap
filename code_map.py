@@ -11,7 +11,7 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.6   
+# version = 1.0.7   
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')
@@ -385,7 +385,7 @@ class python_mapper():
         try:
             members = []
 
-            with codecs.open(file, "r") as f:
+            with codecs.open(file, "r", encoding='utf8') as f:
                 lines = f.read().split('\n')
 
             line_num = 0
@@ -424,7 +424,7 @@ class python_mapper():
                     members.append(info)
 
         except Exception as err:
-            print (err)
+            print ('CodeMap-py:', err)
             members.clear()
         
         # format
