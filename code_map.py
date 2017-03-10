@@ -11,7 +11,7 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.7   
+# version = 1.0.6   
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')
@@ -294,7 +294,6 @@ class show_code_map(sublime_plugin.TextCommand):
             code_map_group = 1
             
             show_in_new_group = settings().get("show_in_new_group", True)
-            # print('show_in_new_group',show_in_new_group)
             
             if not show_in_new_group:
                 if groups == 1:
@@ -331,9 +330,7 @@ class show_code_map(sublime_plugin.TextCommand):
             sublime.active_window().set_view_index(code_map_view, code_map_group, 0)
             code_map_view.sel().clear()
 
-            code_map_view.settings().set("line_numbers", False)
             code_map_view.settings().set("gutter", False)
-            code_map_view.settings().set("fold_buttons", False)
         
             def focus_source_code():
                 sublime.active_window().focus_group(current_group)
