@@ -1,3 +1,6 @@
 {
-    "close_empty_group_on_closing_map": true, 
+    "close_empty_group_on_closing_map": true,
+    "show_in_new_group": true,
+    // width percentage of the screen
+    "codemap_width": 0.17,
 }
