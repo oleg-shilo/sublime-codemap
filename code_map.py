@@ -73,6 +73,7 @@ def refresh_map_for(view):
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
     map_closed_group = -1
+    pre_close_active_group = 0
     # -----------------
     def on_load(self, view):
         if view.file_name() != code_map_file():
@@ -101,10 +102,14 @@ class event_listener(sublime_plugin.EventListener):
             del cells[len(cells) - 1]
             sublime.active_window().run_command("set_layout", layout)
 
+        def focus_source_code():
+            sublime.active_window().focus_group(event_listener.pre_close_active_group)
+
         enabled = settings().get('close_empty_group_on_closing_map', False)
 
         if enabled and view.file_name() == code_map_file() and event_listener.map_closed_group != -1:
             close_codemap_group()
+            sublime.set_timeout(focus_source_code, 100)
 
         event_listener.map_closed_group = -1
     # -----------------
@@ -355,6 +360,7 @@ class show_code_map(sublime_plugin.TextCommand):
             sublime.set_timeout_async(focus_source_code, 100)
 
         else:
+            event_listener.pre_close_active_group = current_group
             code_map_view.window().focus_view(code_map_view)
             code_map_view.window().run_command("close_file")
 
