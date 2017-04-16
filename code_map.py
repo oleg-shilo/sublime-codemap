@@ -73,7 +73,8 @@ def refresh_map_for(view):
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
     map_closed_group = -1
-    pre_close_active_group = 0
+    pre_close_active = 0
+    can_close = False
     # -----------------
     def on_load(self, view):
         if view.file_name() != code_map_file():
@@ -88,7 +89,7 @@ class event_listener(sublime_plugin.EventListener):
 
         def close_codemap_group():
             """Removes the Code Map group, and scales up the rest of the layout"""
-            layout = sublime.active_window().get_layout()
+            layout = window.get_layout()
             cols = layout['cols']
             cells = layout['cells']
             last_col = len(cols) - 1
@@ -100,14 +101,17 @@ class event_listener(sublime_plugin.EventListener):
 
             del cols[last_col]
             del cells[len(cells) - 1]
-            sublime.active_window().run_command("set_layout", layout)
+            window.run_command("set_layout", layout)
 
         def focus_source_code():
-            sublime.active_window().focus_group(event_listener.pre_close_active_group)
+            window.focus_group(event_listener.pre_close_active[0])
+            window.focus_view(event_listener.pre_close_active[1])
 
         enabled = settings().get('close_empty_group_on_closing_map', False)
 
-        if enabled and view.file_name() == code_map_file() and event_listener.map_closed_group != -1:
+        if event_listener.can_close and enabled and view.file_name() == code_map_file() and event_listener.map_closed_group != -1:
+            window = sublime.active_window()
+            event_listener.can_close = False
             close_codemap_group()
             sublime.set_timeout(focus_source_code, 100)
 
@@ -320,12 +324,13 @@ class show_code_map(sublime_plugin.TextCommand):
             cols.append(1)
             newcell = [last_col, 0, last_col + 1, last_row]
             cells.append(newcell)
-            self.view.window().run_command("set_layout", layout)
-            groups = sublime.active_window().num_groups()
+            window.run_command("set_layout", layout)
+            groups = window.num_groups()
             return (groups + 1)
 
-        groups = sublime.active_window().num_groups()
-        current_group = sublime.active_window().active_group()
+        window = self.view.window()
+        groups = window.num_groups()
+        current_group = window.active_group()
         current_view = self.view
 
         code_map_view = get_code_map_view()
@@ -338,7 +343,7 @@ class show_code_map(sublime_plugin.TextCommand):
             if not show_in_new_group:
                 if groups == 1:
                     set_layout_columns(2)
-                    groups = sublime.active_window().num_groups()
+                    groups = window.num_groups()
 
             else:
                 code_map_group = create_codemap_group()
@@ -346,23 +351,27 @@ class show_code_map(sublime_plugin.TextCommand):
             with open(code_map_file(), "w") as file:
                 file.write('')
 
-            code_map_view = sublime.active_window().open_file(code_map_file())
+            code_map_view = window.open_file(code_map_file())
             code_map_view.settings().set("word_wrap", False)
-            sublime.active_window().set_view_index(code_map_view, code_map_group, 0)
+            window.set_view_index(code_map_view, code_map_group, 0)
             code_map_view.sel().clear()
 
             code_map_view.settings().set("gutter", False)
 
             def focus_source_code():
-                sublime.active_window().focus_group(current_group)
-                sublime.active_window().focus_view(current_view)
+                window.focus_group(current_group)
+                window.focus_view(current_view)
 
             sublime.set_timeout_async(focus_source_code, 100)
 
         else:
-            event_listener.pre_close_active_group = current_group
-            code_map_view.window().focus_view(code_map_view)
-            code_map_view.window().run_command("close_file")
+            # close group only if codemap is the only file in it
+            code_map_group = window.get_view_index(code_map_view)[0]
+            if len(window.views_in_group(code_map_group)) == 1:
+                event_listener.pre_close_active = [current_group, current_view]
+                event_listener.can_close = True
+            window.focus_view(code_map_view)
+            window.run_command("close_file")
 
 
 # ===============================================================================
