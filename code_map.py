@@ -4,6 +4,7 @@ import codecs
 import os
 import shutil
 import sys
+import zipfile
 from os import path
 from sublime import Region
 import socket
@@ -20,7 +21,23 @@ if sys.version_info < (3, 3):
 py_syntax = 'Packages/Python/Python.tmLanguage'
 md_syntax = 'Packages/Text/Plain text.tmLanguage'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
+MAPPERS = None
+# -------------------------
+def plugin_loaded():
+    global MAPPERS
+    pack = os.path.join(sublime.installed_packages_path(), 'CodeMap.sublime-package')
+    dst = os.path.join(sublime.packages_path(), 'CodeMap')
+    if not os.path.isdir(dst):
+        os.mkdir(dst)
+    pack = zipfile.ZipFile(pack)
+    with pack as src:
+        src.extract('custom_mappers/code_map.md.py', dst)
+        src.extract('custom_mappers/code_map.txt.py', dst)
 
+    # make a list of the available mappers
+    mpdir = os.path.join(sublime.packages_path(), 'CodeMap', 'custom_mappers')
+    MAPPERS = os.listdir(mpdir)
+# -------------------------
 def settings():
     return sublime.load_settings("code_map.sublime-settings")
 # -------------------------
@@ -83,7 +100,8 @@ class event_listener(sublime_plugin.EventListener):
     def on_pre_close(self, view):
         if view.file_name() == code_map_file():
             event_listener.map_closed_group, x = sublime.active_window().get_view_index(view)
-            pass
+            if len(sublime.active_window().views_in_group(event_listener.map_closed_group)) == 1:
+                event_listener.can_close = True
     # -----------------
     def on_close(self, view):
 
@@ -179,27 +197,25 @@ class code_map_generator(sublime_plugin.TextCommand):
     def get_maper(file):
         # Note that the default map syntax is Python. It just looks better then others
         if file:
-            if file.lower().endswith('.py'):
-                return python_mapper.generate, py_syntax
-
             if file.lower().endswith('.cs') and 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
                 return csharp_mapper.generate, py_syntax
-
-            if file.lower().endswith('.md'):
-                return md_mapper.generate, md_syntax
 
             try:
                 pre, ext = os.path.splitext(file)
                 extension = ext[1:].lower()
 
-                script = settings().get('codemap_'+extension+'_mapper', None)
-                if script:
+                script = 'code_map.'+extension+'.py'
+                if script in MAPPERS:
+                    script = os.path.join(sublime.packages_path(), 'CodeMap', 'custom_mappers', script)
                     mapper = SourceFileLoader(extension+"_mapper", script).load_module()
                     syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
                     return mapper.generate, syntax
 
             except Exception as e:
                 print(e)
+
+            if file.lower().endswith('.py'):
+                return python_mapper.generate, py_syntax
 
     def can_map(file):
         return code_map_generator.get_maper(file) != None
@@ -396,38 +412,6 @@ class csharp_mapper():
     def generate(file):
         return csharp_mapper.send_syntax_request(file, 'codemap').replace('\r', '')
 
-# ===============================================================================
-class md_mapper():
-
-    def generate(file):
-        map = ''
-
-        try:
-
-            with codecs.open(file, "r") as f:
-                lines = f.read().split('\n')
-
-            line_num = 0
-
-            for line in lines:
-                line_num = line_num + 1
-                line = line.lstrip()
-
-                if len(line) == 0:
-                    continue
-
-                if line.startswith("#"):
-                    max = 20
-                    line = line[0:max]+'...'
-                    for i in range(0, (max+3) - len(line)):
-                        line = line + ' '
-
-                    map = map + line + '    :' + str(line_num)+'\n'
-
-        except Exception as err:
-            print (err)
-
-        return map
 # ===============================================================================
 class python_mapper():
     # -----------------

@@ -1,0 +1,99 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: Markdown
+file_extensions:
+  - mdown
+  - markdown
+  - markdn
+  - md
+scope: text.html.markdown
+contexts:
+  main:
+    - match: ([#]{1,6})(.*)+(:)(\d+)
+      captures:
+        1: string.other.link.title.markdown
+        2: punctuation.definition.constant.markdown
+        3: entity.name.section
+        4: entity.name.section
+        # punctuation.definition.list_item.markdown
+        # punctuation.definition.list_item.markdown
+        # punctuation.definition.list_item.markdown
+        # punctuation.definition.list_item.markdown
+        # punctuation.definition.constant.markdown
+        # constant.other.reference.link.markdown
+        # punctuation.definition.constant.markdown
+        # punctuation.separator.key-value.markdown
+        # punctuation.definition.link.markdown
+        # markup.underline.link.markdown
+        # punctuation.definition.link.markdown
+        # string.other.link.description.title.markdown
+        # punctuation.definition.string.begin.markdown
+        # punctuation.definition.string.end.markdown
+        # string.other.link.description.title.markdown
+        # punctuation.definition.string.begin.markdown
+        # punctuation.definition.string.end.markdown
+        # punctuation.definition.heading.markdown
+        # punctuation.definition.heading.markdown
+        # punctuation.definition.blockquote.markdown
+        # punctuation.definition.bold.markdown
+        # punctuation.definition.bold.markdown
+        # punctuation.definition.heading.markdown
+        # punctuation.definition.heading.markdown
+        # punctuation.definition.string.begin.markdown
+        # string.other.link.description.markdown
+        # punctuation.definition.string.end.markdown
+        # invalid.illegal.whitespace.markdown
+        # punctuation.definition.metadata.markdown
+        # punctuation.definition.link.markdown
+        # markup.underline.link.image.markdown
+        # punctuation.definition.link.markdown
+        # string.other.link.description.title.markdown
+        # punctuation.definition.string.markdown
+        # punctuation.definition.string.markdown
+        # string.other.link.description.title.markdown
+        # punctuation.definition.string.markdown
+        # punctuation.definition.string.markdown
+        # punctuation.definition.metadata.markdown
+        # punctuation.definition.string.begin.markdown
+        # string.other.link.description.markdown
+        # punctuation.definition.string.end.markdown
+        # punctuation.definition.constant.markdown
+        # constant.other.reference.link.markdown
+        # punctuation.definition.constant.markdown
+        # punctuation.definition.italic.markdown
+        # punctuation.definition.italic.markdown
+        # punctuation.definition.link.markdown
+        # markup.underline.link.markdown
+        # punctuation.definition.link.markdown
+        # punctuation.definition.link.markdown
+        # markup.underline.link.markdown
+        # punctuation.definition.link.markdown
+        # punctuation.definition.string.begin.markdown
+        # string.other.link.title.markdown
+        # punctuation.definition.string.end.markdown
+        # invalid.illegal.whitespace.markdown
+        # punctuation.definition.metadata.markdown
+        # punctuation.definition.link.markdown
+        # markup.underline.link.markdown
+        # punctuation.definition.link.markdown
+        # string.other.link.description.title.markdown
+        # punctuation.definition.string.begin.markdown
+        # punctuation.definition.string.end.markdown
+        # string.other.link.description.title.markdown
+        # punctuation.definition.string.begin.markdown
+        # punctuation.definition.string.end.markdown
+        # punctuation.definition.metadata.markdown
+        # punctuation.definition.string.begin.markdown
+        # string.other.link.title.markdown
+        # punctuation.definition.string.end.markdown
+        # punctuation.definition.constant.begin.markdown
+        # constant.other.reference.link.markdown
+        # punctuation.definition.constant.end.markdown
+        # punctuation.definition.string.begin.markdown
+        # string.other.link.title.markdown
+        # punctuation.definition.string.end.markdown
+        # punctuation.definition.constant.begin.markdown
+        # punctuation.definition.constant.end.markdown
+        # punctuation.definition.raw.markdown
+        # punctuation.definition.raw.markdown

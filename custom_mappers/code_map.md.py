@@ -5,17 +5,15 @@
 #
 # The map format: <item title>:<item position in source code>
 #
-# In order to activate the mapper its script meeds to be mapped to the supported file type (extension) in the 
-# .sublime-settings file:
-# "codemap_<extension>_mapper": "<path to the script implementing the mapper>"
-#   Example: "codemap_txt_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.txt.py",
+# You may need to restart Sublime Text to reload the mapper
 
 import codecs
 
-map_syntax = 'Packages/Text/Plain text.tmLanguage'
+# you can create custom syntaxes for codemap visuals, this is an example
+map_syntax = 'Packages/CodeMap/custom_languages/md.sublime-syntax'
 
 def generate(file):
-    return md_mapper.generate(file) 
+    return md_mapper.generate(file)
 
 class md_mapper():
 
@@ -32,15 +30,15 @@ class md_mapper():
             for line in lines:
                 line_num = line_num + 1
                 line = line.lstrip()
-                
+
                 if len(line) == 0:
                     continue
 
-                if line.startswith("#"): 
-                    max = 20   
+                if line.startswith("#"):
+                    max = 20
                     line = line[0:max]+'...'
-                    for i in range(0, (max+3) - len(line)):    
-                        line = line + ' ' 
+                    for i in range(0, (max+3) - len(line)):
+                        line = line + ' '
 
                     map = map + line + '    :' + str(line_num)+'\n'
 
@@ -51,4 +49,3 @@ class md_mapper():
 
 
 
-        
