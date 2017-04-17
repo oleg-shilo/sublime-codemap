@@ -29,10 +29,10 @@ def plugin_loaded():
     dst = os.path.join(sublime.packages_path(), 'CodeMap')
     if not os.path.isdir(dst):
         os.mkdir(dst)
-    pack = zipfile.ZipFile(pack)
-    with pack as src:
-        src.extract('custom_mappers/code_map.md.py', dst)
-        src.extract('custom_mappers/code_map.txt.py', dst)
+        pack = zipfile.ZipFile(pack)
+        with pack as src:
+            src.extract('custom_mappers/code_map.md.py', dst)
+            src.extract('custom_mappers/code_map.txt.py', dst)
 
     # make a list of the available mappers
     mpdir = os.path.join(sublime.packages_path(), 'CodeMap', 'custom_mappers')
