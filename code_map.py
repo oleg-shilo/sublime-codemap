@@ -4,6 +4,7 @@ import codecs
 import os
 import shutil
 import sys
+import zipfile
 from os import path
 from sublime import Region
 import socket
@@ -11,7 +12,7 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.6   
+# version = 1.0.6
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')
@@ -20,14 +21,73 @@ if sys.version_info < (3, 3):
 py_syntax = 'Packages/Python/Python.tmLanguage'
 md_syntax = 'Packages/Text/Plain text.tmLanguage'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
+MAPPERS = None
+# -------------------------
+def is_compressed_package():
+    packages_dir = sublime.packages_path()
+    plugin_dir = os.path.dirname(__file__)
+    return not plugin_dir.startswith(packages_dir)
+# -------------------------
+def mapper_path(syntax):
+    return os.path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers', 'code_map.'+syntax+'.py')
+# -------------------------
+def syntax_path(syntax):
+    return os.path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_languages', syntax+'.sublime-syntax')
+# -------------------------
+def plugin_loaded():
 
+    global MAPPERS
+
+    default_mappers = ['md','txt', 'py']        
+    custom_languages = ['md']        
+
+    dst = os.path.join(sublime.packages_path(), 'User', 'CodeMap')
+    mpdir = os.path.join(dst, 'custom_mappers')
+    lng_dir = os.path.join(dst, 'custom_languages')
+
+    if not os.path.isdir(dst): os.mkdir(dst)
+    if not os.path.isdir(mpdir): os.mkdir(mpdir)
+    if not os.path.isdir(lng_dir): os.mkdir(lng_dir)
+
+    if is_compressed_package():  
+        # package was installed via Package Control
+        pack = os.path.join(sublime.installed_packages_path(), 'CodeMap.sublime-package')
+        zip = zipfile.ZipFile(pack)
+        
+        for syntax in default_mappers: 
+            if not os.path.isfile(mapper_path(syntax)): 
+                zip.extract('custom_mappers/code_map.'+syntax+'.py', dst)
+
+        for syntax in custom_languages: 
+            if not os.path.isfile(syntax_path(syntax)): 
+                zip.extract('custom_languages/'+syntax+'.sublime-syntax', dst)
+
+    else:  
+        # package was installed via git or manually
+        plugin_dir = os.path.dirname(__file__)
+
+        for syntax in default_mappers: 
+            src_mapper = os.path.join(plugin_dir, 'custom_mappers', 'code_map.'+syntax+'.py')
+            dst_mapper = mapper_path(syntax)
+            if not os.path.isfile(dst_mapper): 
+                shutil.copyfile(src_mapper, dst_mapper) 
+
+        for syntax in custom_languages: 
+            src_syntax = os.path.join(plugin_dir, 'custom_languages', syntax+'.sublime-syntax')
+            dst_syntax = syntax_path(syntax)
+            if not os.path.isfile(syntax): 
+                shutil.copyfile(src_syntax, dst_syntax) 
+
+    # make a list of the available mappers
+    MAPPERS = os.listdir(mpdir)
+# -------------------------
 def settings():
     return sublime.load_settings("code_map.sublime-settings")
 # -------------------------
 def code_map_file():
-    
+
     plugin_dir = ''
-    
+
     if hasattr(sublime, 'cache_path'):
         plugin_dir = sublime.cache_path()
     else:
@@ -60,7 +120,7 @@ def centre_line_of(view, region):
 # -----------------
 def get_code_map_view():
     for v in sublime.active_window().views():
-        if v.file_name() == code_map_file(): 
+        if v.file_name() == code_map_file():
             return v
 # -----------------
 def refresh_map_for(view):
@@ -73,31 +133,52 @@ def refresh_map_for(view):
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
     map_closed_group = -1
+    pre_close_active = 0
+    can_close = False
     # -----------------
-    def on_load(self, view): 
+    def on_load(self, view):
         if view.file_name() != code_map_file():
             refresh_map_for(view)
     # -----------------
     def on_pre_close(self, view):
         if view.file_name() == code_map_file():
             event_listener.map_closed_group, x = sublime.active_window().get_view_index(view)
-            pass
+            if len(sublime.active_window().views_in_group(event_listener.map_closed_group)) == 1:
+                event_listener.can_close = True
     # -----------------
     def on_close(self, view):
 
+        def close_codemap_group():
+            """Removes the Code Map group, and scales up the rest of the layout"""
+            layout = window.get_layout()
+            cols = layout['cols']
+            cells = layout['cells']
+            last_col = len(cols) - 1
+            map_width = cols[len(cols) - 2]
+
+            for i, col in enumerate(cols):
+                if col > 0:
+                    cols[i] = col/map_width
+
+            del cols[last_col]
+            del cells[len(cells) - 1]
+            window.run_command("set_layout", layout)
+
+        def focus_source_code():
+            window.focus_group(event_listener.pre_close_active[0])
+            window.focus_view(event_listener.pre_close_active[1])
+
         enabled = settings().get('close_empty_group_on_closing_map', False)
 
-        if enabled and view.file_name() == code_map_file() and event_listener.map_closed_group != -1:
-            group = event_listener.map_closed_group 
-            groups = sublime.active_window().num_groups()
-            views_in_group = len(sublime.active_window().views_in_group(group))
-
-            if groups > 1 and views_in_group == 0:
-                set_layout_columns(groups-1)
+        if event_listener.can_close and enabled and view.file_name() == code_map_file() and event_listener.map_closed_group != -1:
+            window = sublime.active_window()
+            event_listener.can_close = False
+            close_codemap_group()
+            sublime.set_timeout(focus_source_code, 100)
 
         event_listener.map_closed_group = -1
     # -----------------
-    def on_post_save_async(self, view): 
+    def on_post_save_async(self, view):
         refresh_map_for(view)
     # -----------------
     def on_activated_async(self, view):
@@ -107,11 +188,11 @@ class event_listener(sublime_plugin.EventListener):
         # process double-click on code map view
         if view.file_name() == code_map_file():
             if command_name == 'drag_select' and 'by' in args.keys() and args['by'] == 'words':
-                point = view.sel()[0].begin() 
+                point = view.sel()[0].begin()
                 line_region = view.line(point)
                 line_text = view.substr(line_region)
 
-                view.sel().clear() 
+                view.sel().clear()
                 view.sel().add(line_region)
 
                 line_num = 1
@@ -133,7 +214,7 @@ class event_listener(sublime_plugin.EventListener):
                     sublime.status_message('Navigating to clicked item...')
                     point = source_code_view.text_point(line_num-1, 0)
                     new_selection = source_code_view.line(point)
-                    
+
                     source_code_view.sel().clear()
                     source_code_view.sel().add(new_selection)
                     source_code_view.show_at_center(new_selection)
@@ -144,8 +225,8 @@ class event_listener(sublime_plugin.EventListener):
                             if group == 1:
                                 sublime.active_window().set_view_index(source_code_view, 0, 0)
                             sublime.active_window().focus_view(source_code_view)
-                            
-                        sublime.set_timeout_async(move_to_first_group, 30)        
+
+                        sublime.set_timeout_async(move_to_first_group, 30)
                     else:
                         sublime.active_window().focus_view(source_code_view)
 
@@ -159,24 +240,26 @@ class code_map_generator(sublime_plugin.TextCommand):
     def get_maper(file):
         # Note that the default map syntax is Python. It just looks better then others
         if file:
-            if file.lower().endswith('.py'):
-                return python_mapper.generate, py_syntax 
-
             if file.lower().endswith('.cs') and 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
-                return csharp_mapper.generate, py_syntax 
+                return csharp_mapper.generate, py_syntax
 
             try:
                 pre, ext = os.path.splitext(file)
-                extension = ext[1:].lower() 
+                extension = ext[1:].lower()
 
-                script = settings().get('codemap_'+extension+'_mapper', None)
-                if script:
+                script = 'code_map.'+extension+'.py'
+                if script in MAPPERS:
+                    script = mapper_path(extension)
                     mapper = SourceFileLoader(extension+"_mapper", script).load_module()
                     syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
+                    
                     return mapper.generate, syntax
 
             except Exception as e:
                 print(e)
+
+            if file.lower().endswith('.py'):
+                return python_mapper.generate, py_syntax
 
     def can_map(file):
         return code_map_generator.get_maper(file) != None
@@ -186,7 +269,7 @@ class code_map_generator(sublime_plugin.TextCommand):
 
         # remember old position
         oldSource = code_map_generator.source
-        if oldSource: 
+        if oldSource:
             center_line = centre_line_of(code_map_view, code_map_view.visible_region())
             selected_line = None
 
@@ -195,19 +278,19 @@ class code_map_generator(sublime_plugin.TextCommand):
 
             code_map_generator.positions[oldSource] = (center_line, selected_line)
 
-        # generate new map 
+        # generate new map
         source = args['source']
         map = ""
         map_syntax = py_syntax
 
-        try: 
+        try:
             (generate, syntax) = code_map_generator.get_maper(source)
             map = generate(source)
             map_syntax = syntax
-            
+
         except Exception as err:
             print ('code_map.generate:', err)
-        
+
         all_text = sublime.Region(0, code_map_view.size())
         code_map_view.replace(edit, all_text, map)
         code_map_view.set_scratch(True)
@@ -233,10 +316,10 @@ class code_map_generator(sublime_plugin.TextCommand):
 class scroll_to_left(sublime_plugin.TextCommand):
     # -----------------
     def code_map_view(next_focus_view=None):
-        
+
         def do():
             get_code_map_view().run_command('scroll_to_left')
-        
+
         sublime.set_timeout(do, 100)
     # -----------------
     def run(self, edit):
@@ -249,7 +332,7 @@ class synch_code_map(sublime_plugin.TextCommand):
     # -----------------
     def run(self, edit):
         map_view = get_code_map_view()
-        
+
         if map_view and len(map_view.sel()) > 0:
             code_view_line, _ = self.view.rowcol(self.view.sel()[0].begin())
 
@@ -257,23 +340,23 @@ class synch_code_map(sublime_plugin.TextCommand):
             prev_map_line = None
 
             lines = map_view.lines(sublime.Region(0, map_view.size()))
-            
+
             for line in lines:
                 link = map_view.substr(line).split(':')[-1]
-                
+
                 member_line_num = None
                 try:
                     member_line_num = int(link)
                 except:
                     continue
-                
+
                 if member_line_num and member_line_num > code_view_line:
                     break
 
                 else:
                     prev_member_line_num = member_line_num
                     prev_map_line = line
-                    
+
             map_view.sel().clear()
             map_view.sel().add(prev_map_line)
             map_view.show_at_center(prev_map_line)
@@ -283,64 +366,72 @@ class synch_code_map(sublime_plugin.TextCommand):
 # ===============================================================================
 class show_code_map(sublime_plugin.TextCommand):
     # -----------------
-    def run(self, edit): 
-        groups = sublime.active_window().num_groups()
-        current_group = sublime.active_window().active_group()
+    def run(self, edit):
+
+        def create_codemap_group():
+            """Adds a column on the right, and scales down the rest of the layout"""
+            layout = self.view.window().get_layout()
+            cols = layout['cols']
+            cells = layout['cells']
+            last_col = len(cols) - 1
+            last_row = len(layout['rows']) - 1
+            width = 1 - settings().get("codemap_width")
+
+            for i, col in enumerate(cols):
+                if col > 0:
+                    cols[i] = col*width
+
+            cols.append(1)
+            newcell = [last_col, 0, last_col + 1, last_row]
+            cells.append(newcell)
+            window.run_command("set_layout", layout)
+            groups = window.num_groups()
+            return (groups + 1)
+
+        window = self.view.window()
+        groups = window.num_groups()
+        current_group = window.active_group()
         current_view = self.view
-        
+
         code_map_view = get_code_map_view()
 
         if not code_map_view:
             code_map_group = 1
-            
+
             show_in_new_group = settings().get("show_in_new_group", True)
-            
+
             if not show_in_new_group:
                 if groups == 1:
                     set_layout_columns(2)
-                    groups = sublime.active_window().num_groups()
+                    groups = window.num_groups()
 
             else:
-                if groups == 1:
-                    set_layout_columns(2)
-                    groups = sublime.active_window().num_groups()
+                code_map_group = create_codemap_group()
 
-                elif groups == 2:
-                    set_layout_columns(3)
-                    groups = sublime.active_window().num_groups()                
-                
-                elif groups == 3:
-                    set_layout_columns(4)
-                    groups = sublime.active_window().num_groups()
-            
-            if groups == 2:
-                code_map_group = 1 
-
-            elif groups == 3:
-                code_map_group = 2 
-
-            elif groups == 4:
-                code_map_group = 3 
-            
-            with open(code_map_file(), "w") as file: 
+            with open(code_map_file(), "w") as file:
                 file.write('')
-            
-            code_map_view = sublime.active_window().open_file(code_map_file())
+
+            code_map_view = window.open_file(code_map_file())
             code_map_view.settings().set("word_wrap", False)
-            sublime.active_window().set_view_index(code_map_view, code_map_group, 0)
+            window.set_view_index(code_map_view, code_map_group, 0)
             code_map_view.sel().clear()
 
             code_map_view.settings().set("gutter", False)
-        
-            def focus_source_code():
-                sublime.active_window().focus_group(current_group)
-                sublime.active_window().focus_view(current_view)
 
-            sublime.set_timeout_async(focus_source_code, 100)   
-                
+            def focus_source_code():
+                window.focus_group(current_group)
+                window.focus_view(current_view)
+
+            sublime.set_timeout_async(focus_source_code, 100)
+
         else:
-            code_map_view.window().focus_view(code_map_view)
-            code_map_view.window().run_command("close_file")
+            # close group only if codemap is the only file in it
+            code_map_group = window.get_view_index(code_map_view)[0]
+            if len(window.views_in_group(code_map_group)) == 1:
+                event_listener.pre_close_active = [current_group, current_view]
+                event_listener.can_close = True
+            window.focus_view(code_map_view)
+            window.run_command("close_file")
 
 
 # ===============================================================================
@@ -351,14 +442,14 @@ class csharp_mapper():
             syntaxerPort = int(os.environ.get('CSSCRIPT_SYNTAXER_PORT', 'not_configured'))
             if syntaxerPort == 'not_configured':
                 return None
-                
+
             clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             clientsocket.connect(('localhost', syntaxerPort))
-            request = '-client:{0}\n-op:{1}\n-script:{2}'.format(os.getpid(), operation, file)   
-            clientsocket.send(request.encode('utf-8'))  
-            response = clientsocket.recv(1024*5)  
+            request = '-client:{0}\n-op:{1}\n-script:{2}'.format(os.getpid(), operation, file)
+            clientsocket.send(request.encode('utf-8'))
+            response = clientsocket.recv(1024*5)
             return response.decode('utf-8')
-        except socket_error as serr: 
+        except socket_error as serr:
             if serr.errno == errno.ECONNREFUSED:
                 print(serr)
     # -----------------
@@ -375,7 +466,7 @@ class python_mapper():
             for i in range(count):
                 text = text + char
             return text
-        
+
         # Pasrse
         item_max_length = 0
 
@@ -399,20 +490,20 @@ class python_mapper():
                 if code_line.startswith('class '):
                     last_type = 'class'
                     last_indent = indent_level
-                    info = (line_num, 
-                            'class', 
-                            line.split('(')[0].split(':')[0].rstrip(), 
-                            indent_level) 
+                    info = (line_num,
+                            'class',
+                            line.split('(')[0].split(':')[0].rstrip(),
+                            indent_level)
 
                 elif code_line.startswith('def '):
                     if last_type == 'def' and indent_level > last_indent:
                         continue #local def
                     last_type = 'def'
                     last_indent = indent_level
-                    info = (line_num, 
-                            'def', 
-                            line.split('(')[0].rstrip()+'()', 
-                            indent_level) 
+                    info = (line_num,
+                            'def',
+                            line.split('(')[0].rstrip()+'()',
+                            indent_level)
 
                 if info:
                     length = len(info[2])
@@ -423,7 +514,7 @@ class python_mapper():
         except Exception as err:
             print ('CodeMap-py:', err)
             members.clear()
-        
+
         # format
         map = ''
         last_indent = 0
@@ -432,7 +523,7 @@ class python_mapper():
             if indent != last_indent:
                 if last_type == 'class' and content_type != 'class':
                     pass
-                else: 
+                else:
                     map = map+'\n'
             else:
                 if content_type == 'class':

@@ -1,0 +1,18 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: CodeMapMarkdown
+file_extensions:
+  - mdown
+  - markdown
+  - markdn
+  - md
+scope: text.html.markdown
+contexts:
+  main:
+    - match: ([#]{1,6})(.*)+(:)(\d+)
+      captures:
+        1: string.other.link.title.markdown
+        2: punctuation.definition.constant.markdown
+        3: entity.name.section
+        4: entity.name.section
