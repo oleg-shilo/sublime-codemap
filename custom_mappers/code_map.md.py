@@ -10,7 +10,7 @@
 import codecs
 
 # you can create custom syntaxes for codemap visuals, this is an example
-map_syntax = 'Packages/CodeMap/custom_languages/md.sublime-syntax'
+map_syntax = 'Packages/User/CodeMap/custom_languages/md.sublime-syntax'
 
 def generate(file):
     return md_mapper.generate(file)

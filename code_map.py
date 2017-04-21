@@ -23,41 +23,60 @@ md_syntax = 'Packages/Text/Plain text.tmLanguage'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
 MAPPERS = None
 # -------------------------
+def is_compressed_package():
+    packages_dir = sublime.packages_path()
+    plugin_dir = os.path.dirname(__file__)
+    return not plugin_dir.startswith(packages_dir)
+# -------------------------
+def mapper_path(syntax):
+    return os.path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers', 'code_map.'+syntax+'.py')
+# -------------------------
+def syntax_path(syntax):
+    return os.path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_languages', syntax+'.sublime-syntax')
+# -------------------------
 def plugin_loaded():
+
     global MAPPERS
 
-    def extract():
-        with pack as src:
-            src.extract('custom_mappers/code_map.md.py', dst)
-            src.extract('custom_mappers/code_map.txt.py', dst)
+    default_mappers = ['md','txt', 'py']        
+    custom_languages = ['md']        
 
-    def check_existing_mappers():
-        """If you add new custom mappers you could add them here, so that only
-        new mappers are extracted when updating to new versions, and old
-        mappers that could have been modified aren't"""
-        with pack as src:
-            md = os.path.join(mpdir, 'code_map.md.py')
-            if not os.path.isfile(md):
-                src.extract('custom_mappers/code_map.md.py', dst)
-            txt = os.path.join(mpdir, 'code_map.txt.py')
-            if not os.path.isfile(txt):
-                src.extract('custom_mappers/code_map.txt.py', dst)
-            # uncomment this if you want to add python mapper
-            # py = os.path.join(mpdir, 'code_map.py.py')
-            # if not os.path.isfile(py):
-            #     src.extract('custom_mappers/code_map.py.py', dst)
+    dst = os.path.join(sublime.packages_path(), 'User', 'CodeMap')
+    mpdir = os.path.join(dst, 'custom_mappers')
+    lng_dir = os.path.join(dst, 'custom_languages')
 
-    pack = os.path.join(sublime.installed_packages_path(), 'CodeMap.sublime-package')
-    pack = zipfile.ZipFile(pack)
-    dst = os.path.join(sublime.packages_path(), 'CodeMap')
-    mpdir = os.path.join(sublime.packages_path(), 'CodeMap', 'custom_mappers')
-    if not os.path.isdir(dst):
-        os.mkdir(dst)
-        extract()
-    elif not os.path.isdir(mpdir):
-        extract()
-    else:
-        check_existing_mappers()
+    if not os.path.isdir(dst): os.mkdir(dst)
+    if not os.path.isdir(mpdir): os.mkdir(mpdir)
+    if not os.path.isdir(lng_dir): os.mkdir(lng_dir)
+
+    if is_compressed_package():  
+        # package was installed via Package Control
+        pack = os.path.join(sublime.installed_packages_path(), 'CodeMap.sublime-package')
+        zip = zipfile.ZipFile(pack)
+        
+        for syntax in default_mappers: 
+            if not os.path.isfile(mapper_path(syntax)): 
+                zip.extract('custom_mappers/code_map.'+syntax+'.py', dst)
+
+        for syntax in custom_languages: 
+            if not os.path.isfile(syntax_path(syntax)): 
+                zip.extract('custom_languages/'+syntax+'.sublime-syntax', dst)
+
+    else:  
+        # package was installed via git or manually
+        plugin_dir = os.path.dirname(__file__)
+
+        for syntax in default_mappers: 
+            src_mapper = os.path.join(plugin_dir, 'custom_mappers', 'code_map.'+syntax+'.py')
+            dst_mapper = mapper_path(syntax)
+            if not os.path.isfile(dst_mapper): 
+                shutil.copyfile(src_mapper, dst_mapper) 
+
+        for syntax in custom_languages: 
+            src_syntax = os.path.join(plugin_dir, 'custom_languages', syntax+'.sublime-syntax')
+            dst_syntax = syntax_path(syntax)
+            if not os.path.isfile(syntax): 
+                shutil.copyfile(src_syntax, dst_syntax) 
 
     # make a list of the available mappers
     MAPPERS = os.listdir(mpdir)
@@ -230,9 +249,10 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                 script = 'code_map.'+extension+'.py'
                 if script in MAPPERS:
-                    script = os.path.join(sublime.packages_path(), 'CodeMap', 'custom_mappers', script)
+                    script = mapper_path(extension)
                     mapper = SourceFileLoader(extension+"_mapper", script).load_module()
                     syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
+                    
                     return mapper.generate, syntax
 
             except Exception as e:
