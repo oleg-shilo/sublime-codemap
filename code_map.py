@@ -12,7 +12,7 @@ import subprocess
 import errno
 from socket import error as socket_error
 
-# version = 1.0.6
+# version = 1.0.8
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')
@@ -38,7 +38,7 @@ def plugin_loaded():
 
     global MAPPERS
 
-    default_mappers = ['md','txt', 'py']        
+    default_mappers = ['md', 'py']        
     custom_languages = ['md']        
 
     dst = os.path.join(sublime.packages_path(), 'User', 'CodeMap')
