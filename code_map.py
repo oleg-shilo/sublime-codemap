@@ -52,6 +52,9 @@ def plugin_loaded():
     if is_compressed_package():  
         # package was installed via Package Control
         pack = os.path.join(sublime.installed_packages_path(), 'CodeMap.sublime-package')
+        if not os.path.isfile(pack): # package was installed via git repository
+            pack = os.path.join(sublime.installed_packages_path(), 'sublime-codemap.sublime-package') 
+
         zip = zipfile.ZipFile(pack)
         
         for syntax in default_mappers: 
@@ -63,7 +66,7 @@ def plugin_loaded():
                 zip.extract('custom_languages/'+syntax+'.sublime-syntax', dst)
 
     else:  
-        # package was installed via git or manually
+        # package was installed manually
         plugin_dir = os.path.dirname(__file__)
 
         for syntax in default_mappers: 
