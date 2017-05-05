@@ -136,7 +136,7 @@ def refresh_map_for(view):
 # ===============================================================================
 class event_listener(sublime_plugin.EventListener):
     map_closed_group = -1
-    pre_close_active = 0
+    pre_close_active = None
     can_close = False
     # -----------------
     def on_load(self, view):
@@ -168,8 +168,9 @@ class event_listener(sublime_plugin.EventListener):
             window.run_command("set_layout", layout)
 
         def focus_source_code():
-            window.focus_group(event_listener.pre_close_active[0])
-            window.focus_view(event_listener.pre_close_active[1])
+            if event_listener.pre_close_active:
+                window.focus_group(event_listener.pre_close_active[0])
+                window.focus_view(event_listener.pre_close_active[1])
 
         enabled = settings().get('close_empty_group_on_closing_map', False)
 
