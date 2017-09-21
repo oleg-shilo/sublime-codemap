@@ -126,16 +126,11 @@ def get_code_map_view():
 
 def refresh_map_for(view):
     file = view.file_name()
-    if file and code_map_generator.can_map(file):
+    if code_map_generator.can_map(file):
         code_map_view = get_code_map_view()
         if code_map_view:
             code_map_view.run_command('code_map_generator', {"source": file})
 
-            # avoid that the whole codemap is shown in a selected state
-            if code_map_view.sel():
-                lines = code_map_view.split_by_newlines(code_map_view.sel()[0])
-            if len(lines) > 1:
-                code_map_view.sel().clear()
 # =============================================================================
 
 
@@ -161,6 +156,7 @@ class CodeMapListener(sublime_plugin.EventListener):
 
             for i, col in enumerate(cols):
                 if col > 0 and col != cols[-1]:
+                    print(cols[i], width)
                     cols[i] = col/width
 
             sup.block_max_pane(True)
@@ -256,14 +252,8 @@ class code_map_generator(sublime_plugin.TextCommand):
     # -----------------
 
     def get_maper(file):
-        # Default map syntax is Python. It just looks better then others
-
-        # get mappers/extensions defined in the settings
-        mappers = [syn for syn in settings().get('syntaxes')]
-        exts = [ext[1] for ext in mappers]
-        mappers = [mapper[0] for mapper in mappers]
-        uni = "settings_mappers"
-
+        # Note that the default map syntax is Python.
+        # It just looks better then others
         if file:
             if file.lower().endswith('.cs'):
                 if 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
@@ -272,19 +262,6 @@ class code_map_generator(sublime_plugin.TextCommand):
             try:
                 pre, ext = path.splitext(file)
                 extension = ext[1:].lower()
-
-                # try with mappers defined in the settings first
-                # "uni_mapper" is the imported module in:
-                #   User/code_map.settings_mappers.py
-                if extension in exts:
-                    map = mappers[exts.index(extension)]
-                    syntax = settings().get(map)[4]
-                    script = mapper_path(uni)
-                    mapper = SourceFileLoader(
-                        "uni_mapper", script).load_module()
-                    return mapper.generate, syntax
-
-                # try with mappers defined in files next
                 script = 'code_map.'+extension+'.py'
 
                 if script in MAPPERS:
@@ -297,11 +274,6 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                     return mapper.generate, syntax
 
-                # if nothing helps, use the universal mapping
-                script = mapper_path(uni)
-                mapper = SourceFileLoader("uni_mapper", script).load_module()
-                return mapper.generate, py_syntax
-
             except Exception as e:
                 print(e)
 
@@ -309,8 +281,6 @@ class code_map_generator(sublime_plugin.TextCommand):
                 return sup.python_mapper.generate, py_syntax
 
     def can_map(file):
-        if path.basename(file) == "Code - Map":
-            return None
         return code_map_generator.get_maper(file) is not None
 
     # -----------------
@@ -482,7 +452,6 @@ class show_code_map(sublime_plugin.TextCommand):
             code_map_view = w.open_file(code_map_file())
             code_map_view.settings().set("word_wrap", False)
             code_map_view.settings().set("gutter", False)
-            code_map_view.settings().set("draw_white_space", "none")
             w.set_view_index(code_map_view, code_map_group, 0)
             code_map_view.sel().clear()
 
