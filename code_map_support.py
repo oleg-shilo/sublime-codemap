@@ -1,10 +1,21 @@
 import sublime
 # import sublime_plugin
 import os
+import re
 import codecs
 import socket
 from socket import error as socket_error
 import errno
+
+# ===============================================================================
+
+EXTENSION, DEPTH = "", [2, {}]
+
+# ===============================================================================
+
+
+def settings():
+    return sublime.load_settings("code_map.sublime-settings")
 
 
 def centre_line_of(view, region):
@@ -56,6 +67,227 @@ def block_max_pane(mode):
         s.set('block_max_pane', mode)
     except:
         return
+
+# ===============================================================================
+
+
+class NavigateCodeMap():
+
+    def highlight_line(v):
+        line = v.line(v.sel()[0].a)
+        v.sel().clear()
+        v.sel().add(sublime.Region(line.a, line.b))
+
+    def keep_going(v, up=False, down=False):
+        if up:
+            line = v.line(v.sel()[0].a-1)
+            s = "going up, "
+            if line.a == 0:
+                return False
+        else:
+            line = v.line(v.sel()[0].b+1)
+            s = "going down, "
+            if line.b == v.size():
+                return False
+        indent = v.substr(sublime.Region(line.a, line.a+1)) in [" ", r"\t"]
+        empty = line.empty()
+        return indent or empty
+
+    def up(v, fast):
+        v.run_command("move_to", {"to": "bol", "extend": False})
+        if not fast:
+            v.run_command("move", {"by": "lines", "forward": False})
+            if v.line(v.sel()[0]).empty():
+                v.run_command("move", {"by": "lines", "forward": False})
+        else:
+            x = NavigateCodeMap.keep_going(v, up=True)
+            while x is not False:
+                x = NavigateCodeMap.keep_going(v, up=True)
+                v.run_command("move", {"by": "lines", "forward": False})
+
+    def down(v, fast):
+        v.run_command("move_to", {"to": "bol", "extend": False})
+        v.run_command("move", {"by": "lines", "forward": True})
+        if not fast:
+            if v.line(v.sel()[0]).empty():
+                v.run_command("move", {"by": "lines", "forward": True})
+        else:
+            x = NavigateCodeMap.keep_going(v, down=True)
+            while x is not False:
+                x = NavigateCodeMap.keep_going(v, down=True)
+                v.run_command("move", {"by": "lines", "forward": True})
+            # v.run_command("move", {"by": "lines", "forward": True})
+
+# ===============================================================================
+
+
+class universal_mapper():
+
+    def evaluate(file, extension, universal=False):
+        global EXTENSION, DEPTH
+
+        sets = settings()
+        if file in DEPTH[1]:
+            DEPTH[0] = DEPTH[1][file]
+        else:
+            DEPTH[0] = sets.get('depth')
+
+        # last resort
+        if universal:
+            universal_mapper.mapping = "universal"
+            EXTENSION = extension
+            syntax = sets.get("universal")[3]
+            return (universal_mapper.generate(file), syntax)
+
+        # unsupported file types
+        unsupported = [syn for syn in sets.get('exclusions')]
+
+        # get mappers/extensions defined in the settings
+        mappers = [syn for syn in sets.get('syntaxes')]
+        exts = [ext[1] for ext in mappers]
+        mappers = [mapper[0] for mapper in mappers]
+
+        # TODO: universal_mapper.guess
+        universal_mapper.guess = None
+
+        # attempt to map a known file type as defined in the settings
+        if extension in exts:
+            map = mappers[exts.index(extension)]
+            universal_mapper.mapping = map
+            syntax = sets.get(map)[3]
+            return (universal_mapper.generate(file), syntax)
+        elif extension in unsupported:
+            return "Unsupported file type", syntax
+
+        # not a recognized file type, will maybe return here later for fallback
+        else:
+            return None
+
+    # -----------------
+
+    def generate(file):
+
+        def is_func(string):
+            matches = []
+            patterns = settings().get(mapping)[0]
+            for pat in patterns:
+                r = re.match(pat[0], string)
+                r = re.sub(pat[1], pat[2], string) if r else ""
+                matches.append(r)
+            match = max(matches)
+            return match
+        # -----------------
+
+        def find_indent(line):
+            i = re.match(r"\s+?", line)
+            if i:
+                x, ni = re.subn(r"\s(?:[^\S])", "", line)
+            else:
+                return 0
+            if ni and not ni % 2:
+                indents.append(ni)
+                min_ind = min(indents)
+                return int(ni/min_ind)
+            else:
+                return 0
+        # -----------------
+
+        def obl_indent(line, indent):
+
+            if oblig_indent:
+                if indent:
+                    return line.lstrip()
+                else:
+                    return ""
+            else:
+                return line.lstrip()
+
+        # -----------------
+
+        def prefix():
+            if mapping != "universal":
+                return pre
+            elif guess == "python":
+                return ""
+            else:
+                return ""
+        # -----------------
+
+        def suffix():
+            if mapping != "universal":
+                return suf
+            elif guess == "python":
+                return "()"
+            else:
+                return ""
+        # -----------------
+
+        def nl(line):
+            if mapping != "universal":
+                nl = re.match(new_line_before, line)
+            elif guess == "python" and line.lstrip()[:5] == "class":
+                nl = True
+            else:
+                return ""
+
+            nl = "\n" if nl else ""
+            return nl
+        # -----------------
+
+        map, indents = '', []
+        mapping = universal_mapper.mapping
+        guess = universal_mapper.guess
+        oblig_indent = settings().get(mapping)[1][0]
+        indent_size = settings().get(mapping)[1][1]
+        new_line_before = settings().get(mapping)[1][2]
+        npos = settings().get(mapping)[2][0]
+        pre = settings().get(mapping)[2][1]
+        suf = settings().get(mapping)[2][2]
+
+        try:
+
+            with codecs.open(file, "r", encoding='utf8') as f:
+                lines = f.read().split('\n')
+
+            line_num = 0
+            printed_lines = []
+
+            for line in lines:
+                line_num = line_num + 1
+
+                if len(line) == 0:
+                    continue
+
+                indent = find_indent(line)
+                line = obl_indent(line, indent)
+                line = is_func(line)
+
+                if line and indent <= DEPTH[0]:
+                    line = nl(line) + ' '*indent*indent_size + \
+                           prefix() + line + suffix()
+                    printed_lines.append((line, line_num))
+
+            if not printed_lines:
+                return "Decoding failed."
+
+            max_length = max(len(line[0]) for line in printed_lines)
+            if max_length > 40:
+                line = line[0:38] + '...'
+            for line in printed_lines:
+                    spc = 1 if line[0][0] == "\n" else 0
+                    string = line[0]+' '*(max_length-len(line[0]))+' '*spc
+                    if len(string) < 25:
+                        string += ' '*(25-len(string))
+                    if npos:
+                        num = str(line[1])
+                        map += num + ':   ' + string + num+'\n'
+                    else:
+                        map += string + '    :' + str(line[1])+'\n'
+
+        except Exception as err:
+            print (err)
+
+        return map
 
 
 # ===============================================================================
@@ -164,8 +396,6 @@ class python_mapper():
             preffix = str_of(indent, ' ')
             lean_content = content[indent:]
             suffix = str_of(item_max_length - len(content), ' ')
-            # suffix = ' '
-            # print(item_max_length)
             map = map + preffix + lean_content + \
                 suffix + ' :' + str(line) + '\n'
             last_indent = indent
