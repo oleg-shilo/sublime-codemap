@@ -17,12 +17,6 @@ EXTENSION, DEPTH = "", [2, {}]
 def settings():
     return sublime.load_settings("code_map.sublime-settings")
 
-
-def centre_line_of(view, region):
-    (first_row, c) = view.rowcol(region.begin())
-    (last_row, c) = view.rowcol(region.end())
-    return int(first_row + (last_row - first_row) / 2)
-
 # -----------------
 
 
@@ -60,7 +54,7 @@ def set_layout_columns(count, coll_width=0.75):
 
 
 def block_max_pane(mode):
-    """Prevent Max Pane from managing windows, unblock after PUI is closed"""
+    '''Prevent Max Pane from managing windows, unblock after PUI is closed'''
 
     try:
         s = sublime.load_settings("max_pane_share.sublime-settings")
@@ -78,20 +72,39 @@ class NavigateCodeMap():
         v.sel().clear()
         v.sel().add(sublime.Region(line.a, line.b))
 
-    def keep_going(v, up=False, down=False):
-        if up:
-            line = v.line(v.sel()[0].a-1)
-            s = "going up, "
-            if line.a == 0:
-                return False
-        else:
-            line = v.line(v.sel()[0].b+1)
-            s = "going down, "
+    def keep_going_down(v):
+
+        def indented():
+            return v.substr(sublime.Region(line.a, line.a+1)) in [" ", r"\t"]
+
+        while True:
+            line = v.line(v.sel()[0].b)
             if line.b == v.size():
-                return False
-        indent = v.substr(sublime.Region(line.a, line.a+1)) in [" ", r"\t"]
-        empty = line.empty()
-        return indent or empty
+                NavigateCodeMap.keep_going_up(v)
+                break
+            line = v.line(v.sel()[0].b+1)
+            if indented() or line.empty():
+                v.run_command("move", {"by": "lines", "forward": True})
+            else:
+                v.run_command("move", {"by": "lines", "forward": True})
+                break
+
+    def keep_going_up(v):
+
+        def indented():
+            return v.substr(sublime.Region(line.a, line.a+1)) in [" ", r"\t"]
+
+        while True:
+            line = v.line(v.sel()[0].a)
+            if line.a == 0:
+                NavigateCodeMap.keep_going_down(v)
+                break
+            line = v.line(v.sel()[0].a-1)
+            if indented() or line.empty():
+                v.run_command("move", {"by": "lines", "forward": False})
+            else:
+                v.run_command("move", {"by": "lines", "forward": False})
+                break
 
     def up(v, fast):
         v.run_command("move_to", {"to": "bol", "extend": False})
@@ -100,23 +113,19 @@ class NavigateCodeMap():
             if v.line(v.sel()[0]).empty():
                 v.run_command("move", {"by": "lines", "forward": False})
         else:
-            x = NavigateCodeMap.keep_going(v, up=True)
-            while x is not False:
-                x = NavigateCodeMap.keep_going(v, up=True)
-                v.run_command("move", {"by": "lines", "forward": False})
+            NavigateCodeMap.keep_going_up(v)
 
     def down(v, fast):
         v.run_command("move_to", {"to": "bol", "extend": False})
         v.run_command("move", {"by": "lines", "forward": True})
+        line = v.line(v.sel()[0])
         if not fast:
-            if v.line(v.sel()[0]).empty():
+            if line.b == v.size():
+                v.run_command("move", {"by": "lines", "forward": False})
+            elif line.empty():
                 v.run_command("move", {"by": "lines", "forward": True})
         else:
-            x = NavigateCodeMap.keep_going(v, down=True)
-            while x is not False:
-                x = NavigateCodeMap.keep_going(v, down=True)
-                v.run_command("move", {"by": "lines", "forward": True})
-            # v.run_command("move", {"by": "lines", "forward": True})
+            NavigateCodeMap.keep_going_down(v)
 
 # ===============================================================================
 
@@ -136,7 +145,7 @@ class universal_mapper():
         if universal:
             universal_mapper.mapping = "universal"
             EXTENSION = extension
-            syntax = sets.get("universal")[3]
+            syntax = sets.get("universal")['syntax']
             return (universal_mapper.generate(file), syntax)
 
         # unsupported file types
@@ -151,13 +160,14 @@ class universal_mapper():
         universal_mapper.guess = None
 
         # attempt to map a known file type as defined in the settings
-        if extension in exts:
+        if extension in unsupported:
+            return ("Unsupported file type",
+                    "Packages/Text/Plain text.tmLanguage")
+        elif extension in exts:
             map = mappers[exts.index(extension)]
             universal_mapper.mapping = map
-            syntax = sets.get(map)[3]
+            syntax = sets.get(map)['syntax']
             return (universal_mapper.generate(file), syntax)
-        elif extension in unsupported:
-            return "Unsupported file type", syntax
 
         # not a recognized file type, will maybe return here later for fallback
         else:
@@ -167,15 +177,32 @@ class universal_mapper():
 
     def generate(file):
 
+        # -----------------
+
         def is_func(string):
+
+            def search(string):
+                r = re.search(pat[0], string)
+                if r:
+                    if pat[1] or pat[2]:
+                        r = re.sub(pat[1], pat[2], string)
+                    else:
+                        r = r.group(0)
+                else:
+                    r = ""
+                return r
+
             matches = []
-            patterns = settings().get(mapping)[0]
+            patterns = settings().get(mapping)['regex']
             for pat in patterns:
-                r = re.match(pat[0], string)
-                r = re.sub(pat[1], pat[2], string) if r else ""
+                if pat[3] and matches:
+                    r = search(matches.pop())
+                else:
+                    r = search(string)
                 matches.append(r)
             match = max(matches)
             return match
+
         # -----------------
 
         def find_indent(line):
@@ -184,7 +211,7 @@ class universal_mapper():
                 x, ni = re.subn(r"\s(?:[^\S])", "", line)
             else:
                 return 0
-            if ni and not ni % 2:
+            if ni:
                 indents.append(ni)
                 min_ind = min(indents)
                 return int(ni/min_ind)
@@ -237,12 +264,12 @@ class universal_mapper():
         map, indents = '', []
         mapping = universal_mapper.mapping
         guess = universal_mapper.guess
-        oblig_indent = settings().get(mapping)[1][0]
-        indent_size = settings().get(mapping)[1][1]
-        new_line_before = settings().get(mapping)[1][2]
-        npos = settings().get(mapping)[2][0]
-        pre = settings().get(mapping)[2][1]
-        suf = settings().get(mapping)[2][2]
+        oblig_indent = settings().get(mapping)['obligatory indent']
+        indent_size = settings().get(mapping)['indent']
+        new_line_before = settings().get(mapping)['empty line in map before']
+        npos = settings().get(mapping)['line numbers before']
+        pre = settings().get(mapping)['prefix']
+        suf = settings().get(mapping)['suffix']
 
         try:
 
@@ -272,20 +299,22 @@ class universal_mapper():
 
             max_length = max(len(line[0]) for line in printed_lines)
             if max_length > 40:
-                line = line[0:38] + '...'
+                max_length = 40
             for line in printed_lines:
-                    spc = 1 if line[0][0] == "\n" else 0
-                    string = line[0]+' '*(max_length-len(line[0]))+' '*spc
-                    if len(string) < 25:
-                        string += ' '*(25-len(string))
-                    if npos:
-                        num = str(line[1])
-                        map += num + ':   ' + string + num+'\n'
-                    else:
-                        map += string + '    :' + str(line[1])+'\n'
+                if len(line) > max_length:
+                    line = line[0:max_length-2] + '...'
+                spc = 1 if line[0][0] == "\n" else 0
+                string = line[0]+' '*(max_length-len(line[0]))+' '*spc
+                if len(string) < 25:
+                    string += ' '*(25-len(string))
+                if npos:
+                    num = str(line[1])
+                    map += num + ':   ' + string + num+'\n'
+                else:
+                    map += string + '    :' + str(line[1])+'\n'
 
         except Exception as err:
-            print (err)
+            print(err)
 
         return map
 
@@ -376,7 +405,7 @@ class python_mapper():
                     members.append(info)
 
         except Exception as err:
-            print ('CodeMap-py:', err)
+            print('CodeMap-py:', err)
             members.clear()
 
         # format
