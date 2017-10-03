@@ -26,7 +26,8 @@
                         ["universal",   ""],
                         ["text",        "txt"],
                         ["python",      "py"],
-                        // ["C#",          "cs"],
+                        // Recommended C# mapper is "CS-Script" ST# plugin, which is natively integrated with CodeMap 
+                        // ["C#",          "cs"], 
                     ],
 
     ///////////////////////////////////////////////////////////////////
