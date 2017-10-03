@@ -163,11 +163,19 @@ class universal_mapper():
         if extension in unsupported:
             return ("Unsupported file type",
                     "Packages/Text/Plain text.tmLanguage")
+
         elif extension in exts:
             map = mappers[exts.index(extension)]
             universal_mapper.mapping = map
             syntax = sets.get(map)['syntax']
-            return (universal_mapper.generate(file), syntax)
+
+            try:
+                with codecs.open(file, "r", encoding='utf8') as f:
+                    file = f.read()
+                return (universal_mapper.generate(file), syntax)
+            except Exception as err:
+                print(err)
+                return None
 
         # not a recognized file type, will maybe return here later for fallback
         else:
@@ -261,6 +269,7 @@ class universal_mapper():
             return nl
         # -----------------
 
+        lines = file.split('\n')
         map, indents = '', []
         mapping = universal_mapper.mapping
         guess = universal_mapper.guess
@@ -271,50 +280,42 @@ class universal_mapper():
         pre = settings().get(mapping)['prefix']
         suf = settings().get(mapping)['suffix']
 
-        try:
+        line_num = 0
+        printed_lines = []
 
-            with codecs.open(file, "r", encoding='utf8') as f:
-                lines = f.read().split('\n')
+        for line in lines:
+            line_num = line_num + 1
 
-            line_num = 0
-            printed_lines = []
+            if len(line) == 0:
+                continue
 
-            for line in lines:
-                line_num = line_num + 1
+            indent = find_indent(line)
+            line = obl_indent(line, indent)
+            line = is_func(line)
 
-                if len(line) == 0:
-                    continue
+            if line and indent <= DEPTH[0]:
+                line = nl(line) + ' '*indent*indent_size + \
+                       prefix() + line + suffix()
+                printed_lines.append((line, line_num))
 
-                indent = find_indent(line)
-                line = obl_indent(line, indent)
-                line = is_func(line)
+        if not printed_lines:
+            return "Decoding failed."
 
-                if line and indent <= DEPTH[0]:
-                    line = nl(line) + ' '*indent*indent_size + \
-                           prefix() + line + suffix()
-                    printed_lines.append((line, line_num))
-
-            if not printed_lines:
-                return "Decoding failed."
-
-            max_length = max(len(line[0]) for line in printed_lines)
-            if max_length > 40:
-                max_length = 40
-            for line in printed_lines:
-                if len(line) > max_length:
-                    line = line[0:max_length-2] + '...'
-                spc = 1 if line[0][0] == "\n" else 0
-                string = line[0]+' '*(max_length-len(line[0]))+' '*spc
-                if len(string) < 25:
-                    string += ' '*(25-len(string))
-                if npos:
-                    num = str(line[1])
-                    map += num + ':   ' + string + num+'\n'
-                else:
-                    map += string + '    :' + str(line[1])+'\n'
-
-        except Exception as err:
-            print(err)
+        max_length = max(len(line[0]) for line in printed_lines)
+        if max_length > 40:
+            max_length = 40
+        for line in printed_lines:
+            if len(line) > max_length:
+                line = line[0:max_length-2] + '...'
+            spc = 1 if line[0][0] == "\n" else 0
+            string = line[0]+' '*(max_length-len(line[0]))+' '*spc
+            if len(string) < 25:
+                string += ' '*(25-len(string))
+            if npos:
+                num = str(line[1])
+                map += num + ':   ' + string + num+'\n'
+            else:
+                map += string + '    :' + str(line[1])+'\n'
 
         return map
 

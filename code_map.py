@@ -21,6 +21,7 @@ py_syntax = 'Packages/Python/Python.tmLanguage'
 md_syntax = 'Packages/Text/Plain text.tmLanguage'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
 MAPPERS = None
+ACTIVE = False
 
 # -------------------------
 
@@ -63,6 +64,10 @@ def plugin_loaded():
             if not path.isfile(syntax_path(syntax)):
                 zip.extract('custom_languages/'+syntax+'.sublime-syntax', dst)
 
+        # copy the context keymap file in the User subfolder
+        if not path.isfile(dst + os.sep + 'Default.sublime-keymap'):
+            zip.extract('Default.sublime-keymap', dst)
+
     else:
         # package was installed manually
         plugin_dir = path.dirname(__file__)
@@ -80,6 +85,12 @@ def plugin_loaded():
             dst_syntax = syntax_path(syntax)
             if not path.isfile(syntax):
                 shutil.copyfile(src_syntax, dst_syntax)
+
+        # copy the context keymap file in the User subfolder
+        if not path.isfile(dst + os.sep + 'Default.sublime-keymap'):
+            src_keymap = path.join(plugin_dir, 'Default.sublime-keymap')
+            dst_keymap = path.join(dst, 'Default.sublime-keymap')
+            shutil.copyfile(src_keymap, dst_keymap)
 
     # make a list of the available mappers
     MAPPERS = os.listdir(mpdir)
@@ -564,7 +575,7 @@ class code_map_select_line(sublime_plugin.TextCommand):
         self.view.sel().clear()
         self.view.sel().add(line_region)
         sublime.set_timeout_async(
-            lambda: self.view.sel().add(line_region), 100)
+            lambda: self.view.sel().add(line_region), 10)
 
 # =============================================================================
 
