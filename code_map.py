@@ -320,8 +320,15 @@ class code_map_generator(sublime_plugin.TextCommand):
 
         try:
             if using_universal_mapper:
-                (map, syntax) = code_map_generator.get_mapper(source)
+                (generate, syntax) = code_map_generator.get_mapper(source)
+
+                if type(generate) is str:
+                    map = generate
+                else:
+                    map = generate(source) 
+                    
                 map_syntax = syntax
+
             else:
                 (generate, syntax) = code_map_generator.get_mapper(source)
                 map = generate(source)
@@ -331,6 +338,7 @@ class code_map_generator(sublime_plugin.TextCommand):
             print('code_map.generate:', err)
 
         all_text = sublime.Region(0, map_view.size())
+        
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
