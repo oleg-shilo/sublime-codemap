@@ -208,7 +208,8 @@ def navigate_to_line(map_view, give_back_focus=False):
         line_num = int(line_text.split(':')[-1].strip(
             ).split(' ')[-1])
     except:
-        pass
+        # navigate only if a valid map node is clicked or has caret 
+        return
 
     source_code_view = None
 
@@ -444,8 +445,22 @@ class synch_code_map(sublime_plugin.TextCommand):
     def run(self, edit):
 
         if ACTIVE:
-            refresh_map_for(self.view)
-            synch_map(self.view)
+
+            if self.view != get_code_map_view():
+                # sync doc -> map
+                refresh_map_for(self.view)
+                synch_map(self.view)
+
+            else:
+                # sync doc <- map
+                self.view.run_command("code_map_select_line")
+                f = False if CodeMapListener.navigating else True
+                navigate_to_line(self.view, give_back_focus=f)
+
+                # sync doc <- map (an alternative approach when the sych is always ->)
+                # if CodeMapListener.active_view:
+                #     synch_map(CodeMapListener.active_view)
+
 
 # ===============================================================================
 
@@ -612,7 +627,7 @@ class CodeMapListener(sublime_plugin.EventListener):
                 w.focus_group(CodeMapListener.active_group)
                 w.focus_view(CodeMapListener.active_view)
 
-        w = win()
+        # w = win()
         sublime.set_timeout(focus_source_code, 10)
         CodeMapListener.closing_code_map = False
     # -----------------
