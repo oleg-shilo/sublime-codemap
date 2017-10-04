@@ -18,7 +18,7 @@ if sys.version_info < (3, 3):
 # ============================================================
 
 py_syntax = 'Packages/Python/Python.tmLanguage'
-md_syntax = 'Packages/Text/Plain text.tmLanguage'
+md_syntax = 'Packages/Markdown/Markdown.sublime-syntax'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
 txt_syntax = 'Packages/Text/Plain text.tmLanguage'
 MAPPERS = None
@@ -143,6 +143,7 @@ def get_code_map_view():
 
 # -----------------
 
+
 def create_codemap_group():
     '''Adds a column on the right, and scales down the layout'''
     w = win()
@@ -166,6 +167,7 @@ def create_codemap_group():
     return (groups + 1)
 
 # -----------------
+
 
 def reset_layout(reduce):
     '''Removes the Code Map group, and scales up the layout'''
@@ -192,6 +194,7 @@ def reset_layout(reduce):
     sublime.set_timeout(lambda: Mapper.block_max_pane(False), 10)
 
 # -----------------
+
 
 def refresh_map_for(view, from_view=False):
     global CURRENT_TEMP_ID
@@ -226,7 +229,7 @@ def refresh_map_for(view, from_view=False):
     map_view = get_code_map_view()
     CURRENT_TEMP_ID = None
 
-    if not map_view:
+    if not map_view or view.settings().get('is_widget'):
         return
     elif file and path.basename(file) == "Code - Map":
         return
@@ -286,6 +289,7 @@ def synch_map(v, give_back_focus=True):
 
 # -----------------
 
+
 def navigate_to_line(map_view, give_back_focus=False):
     try:
         point = map_view.sel()[0].a
@@ -330,32 +334,6 @@ def navigate_to_line(map_view, give_back_focus=False):
             return
         else:
             win().focus_view(source_code_view)
-
-# -----------------
-
-def reset_layout(reduce):
-    '''Removes the Code Map group, and scales up the layout'''
-    w = win()
-    layout = w.get_layout()
-    cols = layout['cols']
-    width = 1 - settings().get("codemap_width")
-
-    map_view = get_code_map_view()
-    if map_view:
-        w.set_view_index(get_code_map_view(), 0, 0)
-
-    if reduce:
-        for i, col in enumerate(cols):
-            if col > 0:
-                cols[i] = col/width
-
-        cols[-2] = 1.0
-        del cols[-1]
-        del layout['cells'][-1]
-
-    Mapper.block_max_pane(True)
-    w.run_command("set_layout", layout)
-    sublime.set_timeout(lambda: Mapper.block_max_pane(False), 10)            
 
 # =============================================================================
 
@@ -492,16 +470,6 @@ class code_map_generator(sublime_plugin.TextCommand):
                 if using_universal_mapper:
                     (map, map_syntax) = map
 
-                # keepping it here for now but probably not necessary
-
-                # if using_universal_mapper:
-                #     (generate, syntax) = code_map_generator.get_mapper(source)
-                #     if type(generate) is str:
-                #         map = generate
-                #     else:
-                #         map = generate(source)
-                #     map_syntax = syntax
-
                 else:
                     (generate, syntax) = map
                     map = generate(source)
@@ -511,7 +479,7 @@ class code_map_generator(sublime_plugin.TextCommand):
             print('code_map.generate:', err)
 
         all_text = sublime.Region(0, map_view.size())
-        
+
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
@@ -534,6 +502,7 @@ class code_map_generator(sublime_plugin.TextCommand):
 
 # ===============================================================================
 
+
 class code_map_increase_depth(sublime_plugin.TextCommand):
 
     def run(self, edit):
@@ -552,6 +521,7 @@ class code_map_increase_depth(sublime_plugin.TextCommand):
 
 # ===============================================================================
 
+
 class code_map_decrease_depth(sublime_plugin.TextCommand):
 
     def run(self, edit):
@@ -569,6 +539,7 @@ class code_map_decrease_depth(sublime_plugin.TextCommand):
         synch_map(self.view)
 
 # ===============================================================================
+
 
 class navigate_code_map(sublime_plugin.TextCommand):
 
@@ -610,6 +581,7 @@ class navigate_code_map(sublime_plugin.TextCommand):
 
 # ===============================================================================
 
+
 class synch_code_map(sublime_plugin.TextCommand):
 
     # -----------------
@@ -620,50 +592,25 @@ class synch_code_map(sublime_plugin.TextCommand):
 
             if self.view != get_code_map_view():
                 # sync doc -> map
-                refresh_map_for(self.view)
+                refresh_map_for(self.view, from_view)
                 synch_map(self.view)
 
             else:
+                # (an alternative approach when the sych is always >)
                 # sync doc <- map
                 self.view.run_command("code_map_select_line")
                 f = False if CodeMapListener.navigating else True
                 navigate_to_line(self.view, give_back_focus=f)
 
-                # sync doc <- map (an alternative approach when the sych is always ->)
-                # if CodeMapListener.active_view:
-                #     synch_map(CodeMapListener.active_view)
-
 # ===============================================================================
+
 
 class show_code_map(sublime_plugin.TextCommand):
 
     # -----------------
 
     def run(self, edit):
-        global ACTIVE
-
-        # -----------------
-
-        def create_codemap_group():
-            '''Adds a column on the right, and scales down the layout'''
-            layout = win().get_layout()
-            cols = layout['cols']
-            cells = layout['cells']
-            last_col = len(cols) - 1
-            last_row = len(layout['rows']) - 1
-            width = 1 - settings().get("codemap_width")
-
-            for i, col in enumerate(cols):
-                if col > 0:
-                    cols[i] = col*width
-
-            cols.append(1)
-            newcell = [last_col, 0, last_col + 1, last_row]
-            cells.append(newcell)
-            groups = w.num_groups()
-            w.run_command("set_layout", layout)
-            sublime.set_timeout(lambda: Mapper.block_max_pane(False), 10)
-            return (groups + 1)
+        global ACTIVE, CURRENT_TEMP_ID, TEMP_VIDS, TEMP_VIEWS
 
         # -----------------
 
@@ -720,10 +667,14 @@ class show_code_map(sublime_plugin.TextCommand):
         else:                       # closing Code Map
             ACTIVE = False
 
+            # clear temp views variables
+            TEMP_VIDS, TEMP_VIEWS = [], {}
+            CURRENT_TEMP_ID = None
+
             CodeMapListener.active_view = current_view
             CodeMapListener.active_group = current_group
             w.focus_view(map_view)
-            
+
             # close group only if codemap is the only file in it
             enabled = settings().get('close_empty_group_on_closing_map', False)
             if enabled:
@@ -738,6 +689,7 @@ class show_code_map(sublime_plugin.TextCommand):
 
 # =============================================================================
 
+
 class code_map_select_line(sublime_plugin.TextCommand):
 
     def run(self, edit):
@@ -751,13 +703,15 @@ class code_map_select_line(sublime_plugin.TextCommand):
 
 # =============================================================================
 
+
 class code_map_temp_view_msg(sublime_plugin.TextCommand):
 
     def run(self, edit):
 
         map_view = get_code_map_view()
         msg = "This view is not bound\n" + \
-              "to a file. Press\n\n    alt+m, alt+v\n\nto try to map it."
+              "to a file.\n\nDefault key:\n\n" + \
+              "    alt+m, alt+v\n\nto try to map it."
         map_view.set_read_only(False)
         map_view.set_scratch(False)
         md = "Packages/Markdown/Markdown.sublime-syntax"
@@ -808,22 +762,14 @@ class CodeMapListener(sublime_plugin.EventListener):
         if view.file_name() == code_map_file():
 
             if not CodeMapListener.closing_code_map:
-                enabled = settings().get('close_empty_group_on_closing_map', False)
-                if enabled:
-                    # close group only if codemap is the only file in it
-                    
-                    # for some reason the view being closed already disconnected from the window so its group cannot be discovered
-                    # cm_group = win().get_view_index(get_code_map_view())[0]
-                    # alone_in_group = len(win().views_in_group(cm_group)) == 1
-                    
-                    print('closing group with views>', len(win().views_in_group(CodeMapListener.map_group)))
-
-                    alone_in_group = len(win().views_in_group(CodeMapListener.map_group)) == 0
-                    reset_layout(reduce=alone_in_group)    
+                if settings().get('close_empty_group_on_closing_map', False):
+                    sublime.set_timeout_async(lambda: win(
+                        ).run_command('code_map_ensure_group_closed'))
                 return
 
             def focus_source_code():
-                if CodeMapListener.active_view and CodeMapListener.active_group:
+                if CodeMapListener.active_view \
+                        and CodeMapListener.active_group:
                     w = win()
                     w.focus_group(CodeMapListener.active_group)
                     w.focus_view(CodeMapListener.active_view)
