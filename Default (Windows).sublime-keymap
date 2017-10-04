@@ -1,6 +1,10 @@
 [
-    { "keys": ["alt+m", "alt+m"], "command": "show_code_map" },
-    { "keys": ["alt+m", "alt+f"], "command": "synch_code_map" }
-    // { "keys": ["alt+m"], "command": "show_code_map" },
-    // { "keys": ["shift+alt+m"], "command": "synch_code_map" }
+    { "keys": ["alt+m", "alt+n"],    "command": "show_code_map" },
+    { "keys": ["alt+m", "alt+m"],    "command": "synch_code_map" },
+    { "keys": ["alt+m", "alt+v"],    "command": "synch_code_map", "args": {"from_view":true } },
+
+    { "keys": ["alt+m", "alt+left"], "command": "code_map_decrease_depth" },
+    { "keys": ["alt+m", "alt+right"],"command": "code_map_increase_depth" },
+
+    { "keys": ["alt+m", "alt+k"],    "command": "navigate_code_map", "args": {"start": true} },
 ]
