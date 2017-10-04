@@ -465,7 +465,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         map_syntax = py_syntax
 
         try:
-            it's the id of the temporary view
+            # it's the id of the temporary view
             if type(source) != str:
                 for v in sublime.active_window().views():
                     if v.id() == source:
