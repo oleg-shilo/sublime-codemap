@@ -299,7 +299,8 @@ class universal_mapper():
                 printed_lines.append((line, line_num))
 
         if not printed_lines:
-            return "Decoding failed."
+            # empty space so it doesn't return None
+            return " "
 
         max_length = max(len(line[0]) for line in printed_lines)
         if max_length > 40:

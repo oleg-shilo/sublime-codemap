@@ -26,7 +26,6 @@
                         ["universal",   ""],
                         ["text",        "txt"],
                         ["python",      "py"],
-                        // ["C#",          "cs"],
                     ],
 
     ///////////////////////////////////////////////////////////////////
@@ -121,23 +120,5 @@
                 "suffix": "()",
                 "syntax": "Packages/MagicPython/grammars/MagicPython.tmLanguage"
             },
-    // "C#": {
-    //             "regex":
-    //             [
-    //                 [
-    //                     "^(namespace |public |private |class )(?:.*$)",
-    //                     "",
-    //                     "",
-    //                     false
-    //                 ],
-    //             ],
-    //             "indent": 4,
-    //             "obligatory indent": false,
-    //             "empty line in map before": "",
-    //             "line numbers before": false,
-    //             "prefix": "",
-    //             "suffix": "",
-    //             "syntax": "Packages/C#/C#.sublime-syntax"
-    //         },
 
 }
