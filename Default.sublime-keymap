@@ -1,0 +1,11 @@
+[
+    { "keys": ["up"],                "command": "navigate_code_map", "args": {"direction": "up"}, "context": [{"key": "code_map_nav"}] },
+    { "keys": ["down"],              "command": "navigate_code_map", "args": {"direction": "down"}, "context": [{"key": "code_map_nav"}] },
+    { "keys": ["alt+up"],            "command": "navigate_code_map", "args": {"direction": "up", "fast": true}, "context": [{"key": "code_map_nav"}] },
+    { "keys": ["alt+down"],          "command": "navigate_code_map", "args": {"direction": "down", "fast": true}, "context": [{"key": "code_map_nav"}] },
+
+    { "keys": ["enter"],             "command": "navigate_code_map", "args": {"stop": true}, "context": [{"key": "code_map_nav"}] },
+    { "keys": ["escape"],            "command": "navigate_code_map", "args": {"stop": true}, "context": [{"key": "code_map_nav"}] },
+    { "keys": ["left"],              "command": "navigate_code_map", "args": {"stop": true}, "context": [{"key": "code_map_nav"}] },
+    { "keys": ["right"],             "command": "navigate_code_map", "args": {"stop": true}, "context": [{"key": "code_map_nav"}] },
+]
