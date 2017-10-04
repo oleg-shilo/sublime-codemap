@@ -350,6 +350,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         if file:
             if file.lower().endswith('.cs'):
                 if 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
+                    using_universal_mapper = False
                     return Mapper.csharp_mapper.generate, py_syntax
 
             try:
