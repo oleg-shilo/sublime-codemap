@@ -798,9 +798,7 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_activated_async(self, view):
 
-        map_view = get_code_map_view()
-
-        if view == map_view:
+        if ACTIVE and view == get_code_map_view():
             CodeMapListener.map_group = win().get_view_index(view)[0]
 
         elif ACTIVE:
