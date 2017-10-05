@@ -125,9 +125,6 @@ def settings():
 def win():
     return sublime.active_window()
 
-def get_group(view):
-    return view.window().get_view_index(view)[0]
-
 # -------------------------
 
 
@@ -252,7 +249,6 @@ def refresh_map_for(view, from_view=False):
 
 def synch_map(v, give_back_focus=True):
 
-    
     def go():
         map_view = get_code_map_view()
 
@@ -288,7 +284,6 @@ def synch_map(v, give_back_focus=True):
     # apply a timeout to the whole function, add an additional timeout if it's
     # necessary to focus back to the original view
     sublime.set_timeout(go, 10)
-
     if give_back_focus:
         sublime.set_timeout(lambda: win().focus_view(v), 10)
 
@@ -596,18 +591,9 @@ class synch_code_map(sublime_plugin.TextCommand):
         if ACTIVE:
 
             if self.view != get_code_map_view():
-                
-                # ignore view in the map_view group as in this case 
-                # the source and map cannot be visible at the same time
-                if get_group(self.view) == CodeMapListener.map_group:
-                    # only prepare the views (make visible) for the future synch
-                    win().focus_view(get_code_map_view())
-                    win().focus_view(CodeMapListener.active_view)
-                
-                else:
-                    # sync doc -> map
-                    refresh_map_for(self.view, from_view)
-                    synch_map(self.view)
+                # sync doc -> map
+                refresh_map_for(self.view, from_view)
+                synch_map(self.view)
 
             else:
                 # (an alternative approach when the sych is always >)
@@ -626,6 +612,16 @@ class show_code_map(sublime_plugin.TextCommand):
     def run(self, edit):
         global ACTIVE, CURRENT_TEMP_ID, TEMP_VIDS, TEMP_VIEWS
 
+        # -----------------
+
+        def focus_source_code():
+            if CodeMapListener.active_view:
+                w = win()
+                w.focus_group(CodeMapListener.active_group)
+                w.focus_view(CodeMapListener.active_view)
+
+        # -----------------
+
         w = win()
         Mapper.block_max_pane(True)
         groups = w.num_groups()
@@ -636,7 +632,6 @@ class show_code_map(sublime_plugin.TextCommand):
         if not map_view:            # opening Code Map
 
             ACTIVE = True
-
 
             show_in_new_group = settings().get("show_in_new_group", True)
 
@@ -664,17 +659,10 @@ class show_code_map(sublime_plugin.TextCommand):
             w.set_view_index(map_view, code_map_group, 0)
             map_view.sel().clear()
 
+            sublime.set_timeout_async(focus_source_code, 10)
 
             CodeMapListener.active_view = current_view
             CodeMapListener.active_group = current_group
-
-            def focus_source_code():
-                # cannot use CodeMapListener.active_view as it will be immediately overwritten by
-                # other views form the new group being activated 
-                w.focus_group(current_group)
-                w.focus_view(current_view)
-
-            sublime.set_timeout_async(focus_source_code, 10)
 
         else:                       # closing Code Map
             ACTIVE = False
@@ -696,8 +684,7 @@ class show_code_map(sublime_plugin.TextCommand):
                 reset_layout(reduce=alone_in_group)
 
             w.run_command("close_file")
-            w.focus_group(current_group)
-            w.focus_view(current_view)
+            focus_source_code()
 
 
 # =============================================================================
@@ -804,12 +791,10 @@ class CodeMapListener(sublime_plugin.EventListener):
         if view == get_code_map_view():
             CodeMapListener.map_group = win().get_view_index(view)[0]
 
-        if ACTIVE and view.file_name() != code_map_file():
-            # ignore view in the map_view group as in this case 
-            # the source and map cannot be visible at the same time
-            view_group = win().get_view_index(view)[0]
+        if ACTIVE and view != get_code_map_view():
 
-            if view != CodeMapListener.active_view and view_group != CodeMapListener.map_group:
+            if view != CodeMapListener.active_view:
+
                 CodeMapListener.active_view = view
                 refresh_map_for(view)
 
