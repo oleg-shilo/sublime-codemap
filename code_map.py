@@ -22,7 +22,7 @@ md_syntax = 'Packages/Markdown/Markdown.sublime-syntax'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
 txt_syntax = 'Packages/Text/Plain text.tmLanguage'
 MAPPERS = None
-ACTIVE, PAUSED = False, False
+ACTIVE = False
 TEMP_VIDS = []
 TEMP_VIEWS = {}
 CURRENT_TEMP_ID = None
@@ -33,7 +33,11 @@ CURRENT_TEMP_ID = None
 def plugin_loaded():
     global MAPPERS, ACTIVE, using_universal_mapper
 
-    ACTIVE = True if get_code_map_view() else False
+    map_view = get_code_map_view()
+    if map_view:
+        ACTIVE = True
+        CodeMapListener.map_group = win().get_view_index(map_view)[0]
+
     using_universal_mapper = True
 
     default_mappers = ['md', 'py']
@@ -190,10 +194,7 @@ def reset_layout(reduce):
     width = 1 - settings().get("codemap_width")
 
     map_view = get_code_map_view()
-    try:
-        alone_in_group = len(w.views_in_group(get_group(map_view))) == 1
-    except:
-        alone_in_group = True
+    alone_in_group = len(w.views_in_group(CodeMapListener.map_group)) == 1
 
     if map_view and alone_in_group:
         w.set_view_index(map_view, 0, 0)
@@ -802,13 +803,14 @@ class CodeMapListener(sublime_plugin.EventListener):
     # -----------------
 
     def on_load(self, view):
-        global PAUSED, ACTIVE
+        global ACTIVE
 
         if ACTIVE and view.file_name() != code_map_file():
             refresh_map_for(view)
 
-        elif PAUSED:
-            PAUSED = False
+        # CodeMap file has been loaded but it's currently inactive
+        elif view.file_name() == code_map_file():
+            CodeMapListener.map_group = win().get_view_index(view)[0]
             ACTIVE = True
 
     # -----------------
@@ -872,10 +874,9 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_window_command(self, window, command_name, args):
         '''Very unstable switching projects, safety measure'''
-        global TEMP_VIDS, TEMP_VIEWS, CURRENT_TEMP_ID, ACTIVE, PAUSED
+        global TEMP_VIDS, TEMP_VIEWS, CURRENT_TEMP_ID, ACTIVE
 
         reset = ["prompt_open_project_or_workspace",
-                 "prompt_switch_project_or_workspace",
                  "prompt_select_workspace",
                  "open_recent_project_or_workspace",
                  "close_workspace",
@@ -883,11 +884,10 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         if ACTIVE and command_name in reset:
 
+            # resetting variables and stopping CodeMap until CodeMap file is
+            # loaded again
             reset_globals()
-            PAUSED = True
 
-            # if command_name == "project_manager":
-            #     window.run_command('show_code_map')
         return None
 
     # -----------------
