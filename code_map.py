@@ -380,6 +380,38 @@ def navigate_to_line(map_view, give_back_focus=False):
 
 # =============================================================================
 
+class marshaler(sublime_plugin.WindowCommand):
+    '''This command marshals the specified routine call by wrapping it into the
+    WindowCommand. It allows the routine to be invoked either in the main ST3 thread
+    or asynchronously from an alternate thread.'''
+    
+    '''Sample: marshaler.invoke(lambda: print('test'))'''
+     
+    _actions = {}
+
+    def _invoke(action, delay, async):
+        import uuid
+        action_id = str(uuid.uuid4())
+        marshaler._actions[action_id] = (action, delay)
+        win().run_command("marshaler", {"action_id": action_id, "async": async} )
+
+    def invoke(action, delay=10):
+        marshaler._invoke(action, delay, False)
+    
+    def invoke_async(action, delay=10):
+        marshaler._invoke(action, delay, True)
+
+    def run(self, **args):
+        async = args['async']
+        action_id = args['action_id']
+        action, delay = marshaler._actions.pop(action_id)
+        if async:
+            sublime.set_timeout_async(action, delay)
+        else:
+            sublime.set_timeout(action, delay)
+
+# =============================================================================
+
 
 class code_map_generator(sublime_plugin.TextCommand):
 
