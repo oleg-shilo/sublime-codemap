@@ -186,14 +186,16 @@ def create_codemap_group():
 # -----------------
 
 
-def reset_layout(reduce):
+def reset_layout():
     '''Removes the Code Map group, and scales up the layout'''
     w = win()
     layout = w.get_layout()
     cols = layout['cols']
     width = 1 - settings().get("codemap_width")
 
-    if reduce:
+    alone_in_group = len(win().views_in_group(CodeMapListener.map_group)) == 0
+
+    if alone_in_group:
         for i, col in enumerate(cols):
             if col > 0:
                 cols[i] = col/width
@@ -680,22 +682,31 @@ class show_code_map(sublime_plugin.TextCommand):
 
             CodeMapListener.active_view = current_view
 
-            show_in_new_group = settings().get("show_in_new_group", True)
+            code_map_group = -1
+            last_group = w.num_groups()-1
+            # look for Favorites in last group
+            for view in w.views_in_group(last_group):
+                if os.path.basename(view.file_name()) == 'Favorites':
+                    code_map_group = last_group
 
-            if not show_in_new_group:
-                if groups == 1:
-                    code_map_group = 1
-                    CodeMapListener.map_group = 1
-                    Mapper.set_layout_columns(2)
-                    groups = 2
+            # Favorites not found
+            if code_map_group == -1:
+                show_in_new_group = settings().get("show_in_new_group", True)
+
+                if not show_in_new_group:
+                    if groups == 1:
+                        code_map_group = 1
+                        CodeMapListener.map_group = 1
+                        Mapper.set_layout_columns(2)
+                        groups = 2
+
+                    else:
+                        # the most right group
+                        code_map_group = groups - 1
 
                 else:
-                    # the most right group
-                    code_map_group = groups - 1
-
-            else:
-                code_map_group = create_codemap_group()
-                CodeMapListener.map_group = code_map_group
+                    code_map_group = create_codemap_group()
+                    CodeMapListener.map_group = code_map_group
 
             with open(code_map_file(), "w") as file:
                 file.write('')
@@ -710,22 +721,11 @@ class show_code_map(sublime_plugin.TextCommand):
 
             # cannot use CodeMapListener.active_view as it will be immediately
             # overwritten by other views from the new group being activated
-            sublime.set_timeout_async(lambda: w.focus_view(current_view))
+            w.focus_view(current_view)
 
         else:                       # closing Code Map
-            reset_globals()
-
             CodeMapListener.active_view = current_view
             w.focus_view(map_view)
-
-            # close group only if codemap is the only file in it
-            enabled = settings().get('close_empty_group_on_closing_map', False)
-            if enabled:
-                reset_globals()
-                cm_group = w.get_view_index(get_code_map_view())[0]
-                alone_in_group = len(w.views_in_group(cm_group)) == 1
-                reset_layout(reduce=alone_in_group)
-
             w.run_command("close_file")
             focus_source_code()
 
@@ -780,17 +780,12 @@ class CodeMapListener(sublime_plugin.EventListener):
     # -----------------
 
     def on_close(self, view):
-        '''Strangely this block isn't run when closing CodeMap through
-        command, that is following the command w.run_command("close_file"), so
-        here we're just checking if CodeMap has been closed with mouse'''
 
         if ACTIVE and view.file_name() == code_map_file():
 
             reset_globals()
             if settings().get('close_empty_group_on_closing_map', False):
-                alone_in_group = len(
-                    win().views_in_group(CodeMapListener.map_group)) == 0
-                reset_layout(reduce=alone_in_group)
+                reset_layout()
             sublime.set_timeout_async(focus_source_code)
 
     # -----------------
