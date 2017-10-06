@@ -137,10 +137,11 @@ def get_group(view):
 
 
 def code_map_file():
-
     dst = path.join(sublime.packages_path(), 'User', 'CodeMap')
     return path.join(dst, 'Code - Map')
 
+def is_code_map(view):
+    return view.file_name() == code_map_file()
 
 def get_code_map_view():
     for v in win().views():
@@ -316,6 +317,19 @@ def focus_source_code():
 
 # -----------------
 
+def get_last_session_map_source():
+    try:
+        with open(code_map_file()+'.source', "r") as file:
+             return file.read()
+    except:
+        return None
+
+def set_last_session_map_source(source):
+    try:
+        with open(code_map_file()+'.source', "w") as file:
+             file.write(source if source else "")
+    except:
+        pass
 
 def scroll(v):
     line = v.line(v.sel()[0].a)
@@ -348,12 +362,16 @@ def navigate_to_line(map_view, give_back_focus=False):
     else:
         source_code_view = None
 
+        if not code_map_generator.source:
+            code_map_generator.source = get_last_session_map_source()
+
         if code_map_generator.source:
             source_code_view = win().find_open_file(
                 code_map_generator.source)
             if not source_code_view:
                 source_code_view = win().open_file(
                     code_map_generator.source)
+    
 
     if source_code_view:
         sublime.status_message('Navigating to selected item...')
@@ -377,6 +395,8 @@ def navigate_to_line(map_view, give_back_focus=False):
             return
         else:
             win().focus_view(source_code_view)
+    else:
+        sublime.message_dialog('Initialize code map first. For example by saving the document.')
 
 # =============================================================================
 
@@ -558,10 +578,11 @@ class code_map_generator(sublime_plugin.TextCommand):
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
+        
+        set_last_session_map_source(source)
 
         if code_map_generator.source in code_map_generator.positions.keys():
-            (viewport_position, selection) = code_map_generator.positions[
-                                                code_map_generator.source]
+            (viewport_position, selection) = code_map_generator.positions[code_map_generator.source]
 
             if viewport_position:
                 map_view.sel().clear()
@@ -863,7 +884,7 @@ class CodeMapListener(sublime_plugin.EventListener):
             if view.file_name() == code_map_file():
                 navigate_to_line(view, give_back_focus = not CodeMapListener.navigating)
                 return ("code_map_select_line", None)
-
+                
         return None
 
     # -----------------
