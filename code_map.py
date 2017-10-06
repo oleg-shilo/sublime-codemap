@@ -33,7 +33,11 @@ CURRENT_TEMP_ID = None
 def plugin_loaded():
     global MAPPERS, ACTIVE, using_universal_mapper
 
-    ACTIVE = True if get_code_map_view() else False
+    map_view = get_code_map_view()
+    if map_view:
+        ACTIVE = True
+        CodeMapListener.map_group = win().get_view_index(map_view)[0]
+
     using_universal_mapper = True
 
     default_mappers = ['md', 'py']
@@ -125,6 +129,10 @@ def settings():
 def win():
     return sublime.active_window()
 
+
+def get_group(view):
+    return view.window().get_view_index(view)[0]
+
 # -------------------------
 
 
@@ -133,13 +141,22 @@ def code_map_file():
     dst = path.join(sublime.packages_path(), 'User', 'CodeMap')
     return path.join(dst, 'Code - Map')
 
-# -----------------
-
 
 def get_code_map_view():
     for v in win().views():
         if v.file_name() == code_map_file():
             return v
+
+# -----------------
+
+
+def reset_globals():
+    global ACTIVE, CURRENT_TEMP_ID, TEMP_VIDS, TEMP_VIEWS
+
+    TEMP_VIDS, TEMP_VIEWS, CURRENT_TEMP_ID = [], {}, None
+    ACTIVE = False
+    CodeMapListener.navigating = False
+    CodeMapListener.skip = False
 
 # -----------------
 
@@ -177,7 +194,9 @@ def reset_layout(reduce):
     width = 1 - settings().get("codemap_width")
 
     map_view = get_code_map_view()
-    if map_view:
+    alone_in_group = len(w.views_in_group(CodeMapListener.map_group)) == 1
+
+    if map_view and alone_in_group:
         w.set_view_index(map_view, 0, 0)
 
     if reduce:
@@ -229,7 +248,11 @@ def refresh_map_for(view, from_view=False):
     map_view = get_code_map_view()
     CURRENT_TEMP_ID = None
 
-    if not map_view or view.settings().get('is_widget'):
+    w = sublime.active_window()
+    widget = view.settings().get('is_widget')
+    transient = view == w.transient_view_in_group(w.active_group())
+
+    if not map_view or widget or transient:
         return
     elif file and path.basename(file) == "Code - Map":
         return
@@ -241,8 +264,8 @@ def refresh_map_for(view, from_view=False):
         CURRENT_TEMP_ID = view.id()
         map_view.run_command('code_map_generator', {"source": view.id()})
         clear_map_selection()
-    elif not file:
-        win().run_command('code_map_temp_view_msg')
+    # elif not file:
+    #     win().run_command('code_map_temp_view_msg')
 
 # -----------------
 
@@ -290,6 +313,21 @@ def synch_map(v, give_back_focus=True):
 # -----------------
 
 
+def focus_source_code():
+    if CodeMapListener.active_view:
+        w = win()
+        w.focus_view(CodeMapListener.active_view)
+
+# -----------------
+
+
+def scroll(v):
+    line = v.line(v.sel()[0].a)
+    v.show_at_center(line.a)
+
+# -----------------
+
+
 def navigate_to_line(map_view, give_back_focus=False):
     try:
         point = map_view.sel()[0].a
@@ -301,7 +339,6 @@ def navigate_to_line(map_view, give_back_focus=False):
 
     line_region = map_view.line(point)
     line_text = map_view.substr(line_region)
-
     line_num = 1
     try:
         line_num = int(line_text.split(':')[-1].strip(
@@ -329,6 +366,16 @@ def navigate_to_line(map_view, give_back_focus=False):
         source_code_view.sel().clear()
         source_code_view.sel().add(new_selection)
         source_code_view.show_at_center(new_selection)
+
+        sublime.set_timeout(lambda: scroll(source_code_view), 20)
+
+        # again, no idea why the map loses its selection when selecting a
+        # region that is before the first map node, but this fixes it
+        try:
+            point = map_view.sel()[0].a
+        except:
+            map_view.sel().add(Region(0, 0))
+            Nav.highlight_line(map_view)
 
         if not give_back_focus:
             return
@@ -545,10 +592,13 @@ class navigate_code_map(sublime_plugin.TextCommand):
 
     def run(self, edit, direction=None, start=False, stop=False, fast=False):
 
-        def scroll():
-            v = CodeMapListener.nav_view
-            line = v.line(v.sel()[0].a)
-            v.show_at_center(line.a)
+        if not ACTIVE:
+            map_view = get_code_map_view()
+            if map_view:
+                win().status_message('  CodeMap: Synch the map first.')
+            else:
+                win().status_message('  CodeMap is curently closed.')
+            return
 
         v = self.view
         cm = get_code_map_view()
@@ -567,12 +617,10 @@ class navigate_code_map(sublime_plugin.TextCommand):
         elif direction == "up":
             Nav.up(cm, fast)
             v.window().run_command('drag_select', {"by": "words"})
-            sublime.set_timeout(scroll, 20)
 
         elif direction == "down":
             Nav.down(cm, fast)
             v.window().run_command('drag_select', {"by": "words"})
-            sublime.set_timeout(scroll, 20)
 
         elif stop:
             win().focus_view(CodeMapListener.nav_view)
@@ -583,20 +631,34 @@ class navigate_code_map(sublime_plugin.TextCommand):
 
 
 class synch_code_map(sublime_plugin.TextCommand):
-
+    '''This command also activates the CodeMap if the view is present, but
+    CodeMap is inactive because ST has just been restarted, or the project has
+    been switched'''
     # -----------------
 
     def run(self, edit, from_view=False):
+        global ACTIVE
+
+        if not ACTIVE and get_code_map_view():
+            ACTIVE = True
 
         if ACTIVE:
 
             if self.view != get_code_map_view():
-                # sync doc -> map
-                refresh_map_for(self.view, from_view)
-                synch_map(self.view)
+                # ignore view in the map_view group as in this case
+                # the source and map cannot be visible at the same time
+                if get_group(self.view) == CodeMapListener.map_group:
+                    # only prepare the views(make visible) for the future synch
+                    win().focus_view(get_code_map_view())
+                    win().focus_view(CodeMapListener.active_view)
+
+                else:
+                    # sync doc -> map
+                    refresh_map_for(self.view, from_view)
+                    synch_map(self.view)
 
             else:
-                # (an alternative approach when the sych is always >)
+                # (an alternative approach when the sych is always ->)
                 # sync doc <- map
                 self.view.run_command("code_map_select_line")
                 f = False if CodeMapListener.navigating else True
@@ -612,20 +674,9 @@ class show_code_map(sublime_plugin.TextCommand):
     def run(self, edit):
         global ACTIVE, CURRENT_TEMP_ID, TEMP_VIDS, TEMP_VIEWS
 
-        # -----------------
-
-        def focus_source_code():
-            if CodeMapListener.active_view:
-                w = win()
-                w.focus_group(CodeMapListener.active_group)
-                w.focus_view(CodeMapListener.active_view)
-
-        # -----------------
-
         w = win()
         Mapper.block_max_pane(True)
         groups = w.num_groups()
-        current_group = w.active_group()
         current_view = self.view
         map_view = get_code_map_view()
 
@@ -633,11 +684,14 @@ class show_code_map(sublime_plugin.TextCommand):
 
             ACTIVE = True
 
+            CodeMapListener.active_view = current_view
+
             show_in_new_group = settings().get("show_in_new_group", True)
 
             if not show_in_new_group:
                 if groups == 1:
                     code_map_group = 1
+                    CodeMapListener.map_group = 1
                     Mapper.set_layout_columns(2)
                     groups = 2
 
@@ -647,6 +701,7 @@ class show_code_map(sublime_plugin.TextCommand):
 
             else:
                 code_map_group = create_codemap_group()
+                CodeMapListener.map_group = code_map_group
 
             with open(code_map_file(), "w") as file:
                 file.write('')
@@ -659,20 +714,14 @@ class show_code_map(sublime_plugin.TextCommand):
             w.set_view_index(map_view, code_map_group, 0)
             map_view.sel().clear()
 
-            sublime.set_timeout_async(focus_source_code, 10)
-
-            CodeMapListener.active_view = current_view
-            CodeMapListener.active_group = current_group
+            # cannot use CodeMapListener.active_view as it will be immediately
+            # overwritten by other views from the new group being activated
+            sublime.set_timeout_async(lambda: w.focus_view(current_view))
 
         else:                       # closing Code Map
-            ACTIVE = False
-
-            # clear temp views variables
-            TEMP_VIDS, TEMP_VIEWS = [], {}
-            CURRENT_TEMP_ID = None
+            reset_globals()
 
             CodeMapListener.active_view = current_view
-            CodeMapListener.active_group = current_group
             w.focus_view(map_view)
 
             # close group only if codemap is the only file in it
@@ -709,13 +758,10 @@ class code_map_temp_view_msg(sublime_plugin.TextCommand):
     def run(self, edit):
 
         map_view = get_code_map_view()
-        msg = "This view is not bound\n" + \
-              "to a file.\n\nDefault key:\n\n" + \
-              "    alt+m, alt+v\n\nto try to map it."
+        msg = "Not a file."
         map_view.set_read_only(False)
         map_view.set_scratch(False)
-        md = "Packages/Markdown/Markdown.sublime-syntax"
-        map_view.settings().set('syntax', md)
+        map_view.settings().set('syntax', txt_syntax)
         all_text = sublime.Region(0, map_view.size())
         map_view.replace(edit, all_text, msg)
         map_view.set_scratch(True)
@@ -727,13 +773,18 @@ class code_map_temp_view_msg(sublime_plugin.TextCommand):
 class code_map_ensure_group_closed(sublime_plugin.WindowCommand):
 
     def run(self):
-        groups = self.window.num_groups()-1
-        if not self.window.views_in_group(groups):
-            reset_layout(reduce=True)
+
+        def delay():
+            groups = self.window.num_groups()-1
+            if not self.window.views_in_group(groups):
+                reset_layout(reduce=True)
+
+        sublime.set_timeout_async(delay)
+        sublime.set_timeout_async(focus_source_code)
 
 
 class CodeMapListener(sublime_plugin.EventListener):
-    active_view, active_group, map_group = None, None, None
+    active_view, map_view, map_group = None, None, None
     closing_code_map, opening_code_map = False, False
     nav_view, navigating, skip = None, False, False
 
@@ -741,40 +792,39 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_deactivated(self, view):
 
-        if CodeMapListener.navigating and not CodeMapListener.skip:
-            CodeMapListener.nav_view = None
-            CodeMapListener.navigating = False
-            CodeMapListener.skip = True
-        elif CodeMapListener.skip:
-            CodeMapListener.skip = False
+        if ACTIVE:
+            if CodeMapListener.navigating and not CodeMapListener.skip:
+                CodeMapListener.nav_view = None
+                CodeMapListener.navigating = False
+                CodeMapListener.skip = True
+            elif CodeMapListener.skip:
+                CodeMapListener.skip = False
 
     # -----------------
 
     def on_load(self, view):
+        global ACTIVE
 
         if ACTIVE and view.file_name() != code_map_file():
             refresh_map_for(view)
+
+        # CodeMap file has been loaded but it's currently inactive
+        elif view.file_name() == code_map_file():
+            CodeMapListener.map_group = win().get_view_index(view)[0]
+            ACTIVE = True
 
     # -----------------
 
     def on_close(self, view):
 
-        if view.file_name() == code_map_file():
+        if ACTIVE and view.file_name() == code_map_file():
 
             if not CodeMapListener.closing_code_map:
                 if settings().get('close_empty_group_on_closing_map', False):
-                    sublime.set_timeout_async(lambda: win(
-                        ).run_command('code_map_ensure_group_closed'))
+                    win().run_command('code_map_ensure_group_closed')
                 return
 
-            def focus_source_code():
-                if CodeMapListener.active_view \
-                        and CodeMapListener.active_group:
-                    w = win()
-                    w.focus_group(CodeMapListener.active_group)
-                    w.focus_view(CodeMapListener.active_view)
-
-            sublime.set_timeout(focus_source_code, 10)
+            sublime.set_timeout_async(focus_source_code)
             CodeMapListener.closing_code_map = False
     # -----------------
 
@@ -788,12 +838,19 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_activated_async(self, view):
 
-        if view == get_code_map_view():
+        if ACTIVE and view == get_code_map_view():
             CodeMapListener.map_group = win().get_view_index(view)[0]
 
-        if ACTIVE and view != get_code_map_view():
+        elif ACTIVE:
 
-            if view != CodeMapListener.active_view:
+            # ignore view in the map_view group as in this case
+            # the source and map cannot be visible at the same time
+            view_group = win().get_view_index(view)[0]
+
+            if view_group == CodeMapListener.map_group:
+                pass
+
+            elif view != CodeMapListener.active_view:
 
                 CodeMapListener.active_view = view
                 refresh_map_for(view)
@@ -811,12 +868,33 @@ class CodeMapListener(sublime_plugin.EventListener):
                     f = False if CodeMapListener.navigating else True
                     navigate_to_line(view, give_back_focus=f)
                     return ("code_map_select_line", None)
+        return None
+
+    # -----------------
+
+    def on_window_command(self, window, command_name, args):
+        '''Very unstable switching projects, safety measure'''
+        global TEMP_VIDS, TEMP_VIEWS, CURRENT_TEMP_ID, ACTIVE
+
+        reset = ["prompt_open_project_or_workspace",
+                 "prompt_select_workspace",
+                 "open_recent_project_or_workspace",
+                 "close_workspace",
+                 "project_manager"]
+
+        if ACTIVE and command_name in reset:
+
+            # resetting variables and stopping CodeMap until CodeMap file is
+            # loaded again
+            reset_globals()
+
+        return None
 
     # -----------------
 
     def on_query_context(self, view, key, operator, operand, match_all):
 
-        if CodeMapListener.navigating:
+        if ACTIVE and CodeMapListener.navigating:
             if key == "code_map_nav":
                 return True
             else:
