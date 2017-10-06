@@ -193,12 +193,6 @@ def reset_layout(reduce):
     cols = layout['cols']
     width = 1 - settings().get("codemap_width")
 
-    map_view = get_code_map_view()
-    alone_in_group = len(w.views_in_group(CodeMapListener.map_group)) == 1
-
-    if map_view and alone_in_group:
-        w.set_view_index(map_view, 0, 0)
-
     if reduce:
         for i, col in enumerate(cols):
             if col > 0:
@@ -727,7 +721,7 @@ class show_code_map(sublime_plugin.TextCommand):
             # close group only if codemap is the only file in it
             enabled = settings().get('close_empty_group_on_closing_map', False)
             if enabled:
-                CodeMapListener.closing_code_map = True
+                reset_globals()
                 cm_group = w.get_view_index(get_code_map_view())[0]
                 alone_in_group = len(w.views_in_group(cm_group)) == 1
                 reset_layout(reduce=alone_in_group)
@@ -751,36 +745,6 @@ class code_map_select_line(sublime_plugin.TextCommand):
             lambda: self.view.sel().add(line_region), 10)
 
 # =============================================================================
-
-
-class code_map_temp_view_msg(sublime_plugin.TextCommand):
-
-    def run(self, edit):
-
-        map_view = get_code_map_view()
-        msg = "Not a file."
-        map_view.set_read_only(False)
-        map_view.set_scratch(False)
-        map_view.settings().set('syntax', txt_syntax)
-        all_text = sublime.Region(0, map_view.size())
-        map_view.replace(edit, all_text, msg)
-        map_view.set_scratch(True)
-        map_view.set_read_only(True)
-
-# =============================================================================
-
-
-class code_map_ensure_group_closed(sublime_plugin.WindowCommand):
-
-    def run(self):
-
-        def delay():
-            groups = self.window.num_groups()-1
-            if not self.window.views_in_group(groups):
-                reset_layout(reduce=True)
-
-        sublime.set_timeout_async(delay)
-        sublime.set_timeout_async(focus_source_code)
 
 
 class CodeMapListener(sublime_plugin.EventListener):
@@ -816,16 +780,19 @@ class CodeMapListener(sublime_plugin.EventListener):
     # -----------------
 
     def on_close(self, view):
+        '''Strangely this block isn't run when closing CodeMap through
+        command, that is following the command w.run_command("close_file"), so
+        here we're just checking if CodeMap has been closed with mouse'''
 
         if ACTIVE and view.file_name() == code_map_file():
 
-            if not CodeMapListener.closing_code_map:
-                if settings().get('close_empty_group_on_closing_map', False):
-                    win().run_command('code_map_ensure_group_closed')
-                return
-
+            reset_globals()
+            if settings().get('close_empty_group_on_closing_map', False):
+                alone_in_group = len(
+                    win().views_in_group(CodeMapListener.map_group)) == 0
+                reset_layout(reduce=alone_in_group)
             sublime.set_timeout_async(focus_source_code)
-            CodeMapListener.closing_code_map = False
+
     # -----------------
 
     def on_post_save_async(self, view):
