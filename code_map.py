@@ -593,7 +593,7 @@ class navigate_code_map(sublime_plugin.TextCommand):
             if map_view:
                 win().status_message('  CodeMap: Synch the map first.')
             else:
-                win().status_message('  CodeMap is curently closed.')
+                win().status_message('  CodeMap is currently closed.')
             return
 
         v = self.view
@@ -657,7 +657,7 @@ class synch_code_map(sublime_plugin.TextCommand):
                 # (an alternative approach when the sych is always ->)
                 # sync doc <- map
                 self.view.run_command("code_map_select_line")
-                f = False if CodeMapListener.navigating else True
+                f = not CodeMapListener.navigating
                 navigate_to_line(self.view, give_back_focus=f)
 
 # ===============================================================================
@@ -686,7 +686,8 @@ class show_code_map(sublime_plugin.TextCommand):
             last_group = w.num_groups()-1
             # look for Favorites in last group
             for view in w.views_in_group(last_group):
-                if os.path.basename(view.file_name()) == 'Favorites':
+                file = view.file_name()
+                if file and os.path.basename(file) == 'Favorites':
                     code_map_group = last_group
 
             # Favorites not found
@@ -770,7 +771,7 @@ class CodeMapListener(sublime_plugin.EventListener):
         global ACTIVE
 
         if ACTIVE and view.file_name() != code_map_file():
-            refresh_map_for(view)
+            refresh_map_for(view)   
 
         # CodeMap file has been loaded but it's currently inactive
         elif view.file_name() == code_map_file():
@@ -822,14 +823,15 @@ class CodeMapListener(sublime_plugin.EventListener):
     def on_text_command(self, view, command_name, args):
         '''Process double-click on code map view'''
 
-        if ACTIVE:
-            if view.file_name() == code_map_file():
-                if command_name == 'drag_select' and 'by' in args.keys(
-                                               ) and args['by'] == 'words':
+        double_click = command_name == 'drag_select' \
+                       and 'by' in args.keys() \
+                       and args['by'] == 'words'
 
-                    f = False if CodeMapListener.navigating else True
-                    navigate_to_line(view, give_back_focus=f)
-                    return ("code_map_select_line", None)
+        if ACTIVE and double_click:
+            if view.file_name() == code_map_file():
+                navigate_to_line(view, give_back_focus = not CodeMapListener.navigating)
+                return ("code_map_select_line", None)
+
         return None
 
     # -----------------
