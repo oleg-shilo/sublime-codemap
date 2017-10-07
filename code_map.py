@@ -131,7 +131,13 @@ def win():
 
 
 def get_group(view):
-    return None if not view else view.window().get_view_index(view)[0]
+    if view:
+        w = view.window()
+        if w:
+            return w.get_view_index(view)[0]
+
+    # I wish C# style checking was possible with Python: 
+    # return view?.window()?.get_view_index(view)[0]          
 
 # -------------------------
 
