@@ -131,7 +131,7 @@ def win():
 
 
 def get_group(view):
-    return view.window().get_view_index(view)[0]
+    return None if not view else view.window().get_view_index(view)[0]
 
 # -------------------------
 
@@ -248,8 +248,9 @@ def refresh_map_for(view, from_view=False):
     w = sublime.active_window()
     widget = view.settings().get('is_widget')
     transient = view == w.transient_view_in_group(w.active_group())
+    is_in_same_group = get_group(map_view) == get_group(view)
 
-    if not map_view or widget or transient:
+    if not map_view or widget or transient or is_in_same_group:
         return
     elif file and path.basename(file) == "Code - Map":
         return
@@ -728,6 +729,7 @@ class show_code_map(sublime_plugin.TextCommand):
         groups = w.num_groups()
         current_view = self.view
         map_view = get_code_map_view()
+        
 
         if not map_view:            # opening Code Map
 
@@ -773,15 +775,29 @@ class show_code_map(sublime_plugin.TextCommand):
             w.set_view_index(map_view, code_map_group, 0)
             map_view.sel().clear()
 
-            # cannot use CodeMapListener.active_view as it will be immediately
-            # overwritten by other views from the new group being activated
-            w.focus_view(current_view)
+            is_in_same_group = (code_map_group == get_group(current_view))
+
+            if not is_in_same_group:
+                # cannot use CodeMapListener.active_view as it will be immediately
+                # overwritten by other views from the new group being activated
+                w.focus_view(current_view)
+            else:
+                w.focus_view(map_view)
+                if code_map_group > 0: # move focus to the left group to trigger map refresh
+                    w.focus_group(code_map_group-1)
 
         else:                       # closing Code Map
+            is_map_view_active = w.active_view_in_group(get_group(map_view)) == map_view
+            is_in_same_group = get_group(map_view) == get_group(current_view)
+
             CodeMapListener.active_view = current_view
             w.focus_view(map_view)
-            w.run_command("close_file")
-            focus_source_code()
+            
+            if is_map_view_active:
+                w.run_command("close_file")
+
+            if not is_in_same_group:    
+                focus_source_code()
 
 
 # =============================================================================
