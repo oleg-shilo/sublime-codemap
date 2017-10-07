@@ -571,11 +571,13 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                 if using_universal_mapper:
                     (map, map_syntax) = map
-
                 else:
-                    (generate, syntax) = map
-                    map = generate(source)
-                    map_syntax = syntax
+                    (generate, map_syntax) = map
+                    try:
+                        map = generate(source)
+                    except Exception as e:
+                        print('Custom mapper failure')
+                        raise e
 
         except Exception as err:
             print('code_map.generate:', err)
@@ -904,7 +906,8 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         if ACTIVE and double_click:
             if view.file_name() == code_map_file():
-                navigate_to_line(view, give_back_focus = not CodeMapListener.navigating)
+                marshaler.invoke(lambda:
+                    navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
                 return ("code_map_select_line", None)
                 
         return None

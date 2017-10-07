@@ -51,6 +51,51 @@ In order to activate the mapper its script needs to be mapped to the supported f
 
   Example: `"codemap_md_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.md.py"`
    
+### Universal Mapper
+
+The _universal mapper_ is a generic Regex based mapper that can be used as an alternative for dedicated custom mappers. The mapping algorithm(s) of the _universal mapper_ is defined in the plugin settings file instead of the _python_ file as for dedicated mappers. 
+
+The availability of _universal mapper_ can be controlled via corresponding setting value:
+
+```json
+"using_universal_mapper": true
+``` 
+
+If it is enabled the plugin will try to use _universal mapper_ mapping algorithm first and only if it's not available the plugin will try to locate a dedicated custom mapper based on the active document file extension.
+
+Below is a simple example of adding _universal mapper_ support for TypeScript:
+
+Add file extension and name of the algorithm section to the `syntaxes` section:
+```json
+"syntaxes":     [
+                        ["universal",   ""],
+                        ["text",        "txt"],
+                        ["typescript",  "ts"],
+                        ["python",      "py"]
+                ],
+```
+
+Create a new `typescript` section an fill it with the the following content:  
+```json
+"typescript": {
+                "regex":
+                [
+                    [
+                        "^(class |function |export class |interface ).*$",
+                        "[(:{].*$",
+                        "",
+                        false
+                    ]
+                ],
+                "indent": 4,
+                "obligatory indent": false,
+                "empty line in map before": "class",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "()",
+                "syntax": "Packages/TypeScript/TypeScript.tmLanguage"
+             },
+```  
 
 ## Settings
 

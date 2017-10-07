@@ -249,12 +249,13 @@ class universal_mapper():
         # -----------------
 
         def suffix():
+            # always add ' ' to let text/line_num separation for the cases when "line numbers before" is true
             if mapping != "universal":
-                return suf
+                return suf+" "
             elif guess == "python":
-                return "()"
+                return "() "
             else:
-                return ""
+                return " "
         # -----------------
 
         def nl(line):
