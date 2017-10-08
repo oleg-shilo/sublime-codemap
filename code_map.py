@@ -40,7 +40,7 @@ def plugin_loaded():
 
     using_universal_mapper = True
 
-    default_mappers = ['md', 'py']
+    default_mappers = ['md', 'py', 'ts']
     custom_languages = ['md']
     ipath = sublime.installed_packages_path()
     Mapper.EXTENSION, Mapper.DEPTH = "", [settings().get('depth'), {}]
@@ -148,6 +148,13 @@ def code_map_file():
 
 def is_code_map(view):
     return view.file_name() == code_map_file()
+
+def is_code_map_visible():
+    map = get_code_map_view()
+    if map == win().active_view_in_group(get_group(map)):
+        return True
+    else:
+        return False
 
 def get_code_map_view():
     for v in win().views():
@@ -870,9 +877,13 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_post_save_async(self, view):
 
-        if ACTIVE:
+        if ACTIVE: # map view is opened
             refresh_map_for(view)
-            synch_map(view)
+            
+            # synch_map brings map_view into focus so call it only 
+            # if it is not hidden behind other views 
+            if is_code_map_visible(): 
+                synch_map(view)
 
     # -----------------
 
