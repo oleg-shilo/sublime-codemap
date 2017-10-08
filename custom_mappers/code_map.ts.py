@@ -91,7 +91,7 @@ class ts_mapper():
                 if info:
                     pass     
 
-                elif code_line.startswith('function '):
+                elif code_line.startswith('function ') or code_line.startswith('export function ') :
                     if last_type == 'function' and indent_level > last_indent:
                         continue # private class functions
                     last_type = 'function'
@@ -138,4 +138,6 @@ class ts_mapper():
             last_indent = indent
             last_type = content_type
 
+        # print('111 qqqqqqqqqq')
+        # print(map)
         return map
