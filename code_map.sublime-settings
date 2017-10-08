@@ -118,7 +118,7 @@
                 "line numbers before": false,
                 "prefix": "",
                 "suffix": "()",
-                "syntax": "Packages/MagicPython/grammars/MagicPython.tmLanguage"
+                "syntax": "Packages/Python/Python.tmLanguage"
             },
 
 }
