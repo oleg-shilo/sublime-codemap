@@ -1,0 +1,8 @@
+Features/Changes:
+
+1. Added _Universal Mapper_. An alternative mapping technique based on RegEx expression defined in the settings file.
+2. Support for variable depth of nesting. It's automatically available for all syntaxes covered by _Universal Mapper_. 
+3. Added TypeScript mapper
+4. Added keyboard based navigation within Code Map "panel".
+5. Stability improvements
+6. Minor key bindings changes
