@@ -46,11 +46,64 @@ The CodeMap view is always placed in the most right column (group) of the active
 You can extend the built-in functionality with custom mappers. Custom mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure. 
 
 You can find the [code_map.md.py](custom_mappers/code_map.md.py) sample in the source code. This mapper builds the list of markdown sections in the given text file.
-In order to activate the mapper its script needs to be mapped to the supported file type (extension) in the _code_\__map.sublime-settings_ file:
-`"codemap_<extension>_mapper": "<path to the script implementing the mapper>"`
+In order to activate the mapper its script needs to be properly named and placed in the special folder: `<Packages>\User\CodeMap\custom_mappers`. The name of the mapper file must follow a special naming convention:
+`"code_map.<extension>.py"`
 
-  Example: `"codemap_md_mapper": "c:/st3/plugins/codemap/custom_mappers/code_map.md.py"`
+  Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\code_map.md.py"`
    
+### Universal Mapper
+
+The _universal mapper_ is a generic Regex based mapper that can be used as an alternative for dedicated custom mappers. The mapping algorithm(s) of the _universal mapper_ is defined in the plugin settings, and is extension-dependent.
+
+The plugin will always try to use _universal mapper_ mapping algorithm first, and only if it's not available the plugin will try to locate a dedicated custom mapper based on the active document file extension. Full instructions on how to make a custom mapper using the _universal mapper_ are included in the settings file.
+
+Note that if you use a custom mapper for an extension that is already defined in the _universal mapper_ settings, the latter will have precedence. Comment out the extension in the _universal mapper_ section to use your custom mapper in its place.
+
+The advantage of using the _universal mapper_ (and define new rules for it when needed) is that it supports by default the map depth system, with which you can alter the depth of the displayed map. Custom mappers need to support this system internally.
+
+Below is a simple example of adding _universal mapper_ support for TypeScript:
+
+Add file extension (e.g. '_ts_') and name of the algorithm section to the `syntaxes` section:
+```json
+"syntaxes":     [
+                        ["universal",   ""],
+                        ["text",        "txt"],
+                        ["typescript",  "ts"],
+                        ["python",      "py"]
+                ],
+```
+
+Create a new `typescript` section an fill it with the the following content:  
+```json
+"typescript": {
+                "regex":
+                [
+                    [
+                        "^(class |function |export class |interface ).*$",
+                        "[(:{].*$",
+                        "",
+                        false
+                    ]
+                ],
+                "indent": 4,
+                "obligatory indent": false,
+                "empty line in map before": "class",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "()",
+                "syntax": "Packages/TypeScript/TypeScript.tmLanguage"
+             },
+```
+
+### Map depth
+
+If using the _universal mapper_ or a dedicated mapper that supports it, you can change the depth of the displayed map. Default hotkeys are:
+
+    { "keys": ["alt+m", "alt+left"], "command": "code_map_decrease_depth" },
+    { "keys": ["alt+m", "alt+right"],"command": "code_map_increase_depth" },
+
+ 
+
 
 ## Settings
 

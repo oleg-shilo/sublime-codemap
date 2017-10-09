@@ -1,12 +1,12 @@
 # Custom mapper sample for CodeMap plugin
 # This script defines a mandatory `def generate(file)` and module attribute map_syntax:
-# - `def generate(file)` 
-#    The routine analyses the file content and produces the 'code map' representing the content structure. 
+# - `def generate(file)`
+#    The routine analyses the file content and produces the 'code map' representing the content structure.
 #    In this case it builds the list of sections (lines that start with `#` character) in the py file.
-# 
+#
 # - `map_syntax`
 #    Optional attribute that defines syntax highlight to be used for the code map text
-# 
+#
 # The map format: <item title>:<item position in source code>
 #
 # You may need to restart Sublime Text to reload the mapper
@@ -14,11 +14,13 @@
 import codecs
 import sublime
 
-ignored = sublime.load_settings('Preferences.sublime-settings').get('ignored_packages')
-# installed = sublime.load_settings('Package Control.sublime-settings').get('installed_packages')
+try:
+    installed = sublime.load_settings('Package Control.sublime-settings').get('installed_packages')
+except:
+    installed = []
 
 # you can support custom language definitions, with a fallback if not installed
-if 'Python' in ignored:
+if 'MagicPython' in installed:
     map_syntax = 'Packages/MagicPython/grammars/MagicPython.tmLanguage'
 else:
     map_syntax = 'Packages/Python/Python.tmLanguage'
