@@ -288,24 +288,26 @@ def synch_map(v, give_back_focus=True):
 
         if map_view and map_view.size() > 0:
             code_view_line, _ = v.rowcol(v.sel()[0].a)
-
             prev_map_line = None
 
             lines = map_view.lines(sublime.Region(0, map_view.size()))
 
+            entries = []
+            index = 0
             for line in lines:
                 link = map_view.substr(line).split(':')[-1]
 
-                member_line_num = None
                 try:
-                    member_line_num = int(link)
+                    entries.append((int(link), line))    
                 except:
                     continue
 
-                # added +1 so that it works for the first line of the function
-                if member_line_num and member_line_num > code_view_line+1:
-                    break
+            entries.sort(key=lambda tup: tup[0])
 
+            for member_line_num, line in entries:
+                # added +1 so that it works for the first line of the function
+                if member_line_num > code_view_line+1:
+                    break
                 else:
                     prev_map_line = line
 
