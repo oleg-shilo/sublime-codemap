@@ -42,7 +42,6 @@ def plugin_loaded():
 
     default_mappers = ['md', 'py', 'ts']
     custom_languages = ['md']
-    ipath = sublime.installed_packages_path()
     Mapper.EXTENSION, Mapper.DEPTH = "", [settings().get('depth'), {}]
 
     dst = path.join(sublime.packages_path(), 'User', 'CodeMap')
@@ -57,11 +56,12 @@ def plugin_loaded():
         os.mkdir(lng_dir)
 
     if is_compressed_package():
+        ipath = sublime.installed_packages_path()
         # package was installed via Package Control
-        pack = path.join(ipath(), 'CodeMap.sublime-package')
+        pack = path.join(ipath, 'CodeMap.sublime-package')
         # package was installed via git repository
         if not path.isfile(pack):
-            pack = path.join(ipath(), 'sublime-codemap.sublime-package')
+            pack = path.join(ipath, 'sublime-codemap.sublime-package')
 
         zip = zipfile.ZipFile(pack)
 
