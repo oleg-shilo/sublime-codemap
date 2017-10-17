@@ -18,6 +18,24 @@
     // unless you make a mapper that supports it by reading this setting.
     "depth": 1,
 
+    ///////////////////////////////////////////////////////////////////
+    //                IMPORTANT - READ CAREFULLY                     //
+    //                                                               //
+    //             Order of preference for mappers is:               //
+    //                                                               //
+    //    1. defined mappers below, except "universal"               //
+    //    2. mappers in User/CodeMap/custom_mappers                  //
+    //    3. "universal" mapper (as a fallback)                      //
+    //                                                               //
+    //                                                               //
+    //    If an extension is defined in "syntaxes" below, it WILL    //
+    //    override custom mappers. To avoid this, if you want        //
+    //    to use a custom mapper for an extension defined there,     //
+    //    you must comment out or delete the extension from the      //
+    //    "syntaxes" key below.                                      //
+    //                                                               //
+    ///////////////////////////////////////////////////////////////////
+
     // defined mappers with preferred extension, universal is used as a backup
     // for undefined syntaxes; to use the defined mappers below, they must be
     // present in this list. Don't put anything in this list that isn't
@@ -27,14 +45,6 @@
                         ["text",        "txt"],
                         ["python",      "py"]
                     ],
-
-    ///////////////////////////////////////////////////////////////////
-    // Order of preference for mappers is:                           //
-    ///////////////////////////////////////////////////////////////////
-    //
-    // 1. defined mappers below, except "universal"
-    // 2. mappers in User/CodeMap/custom_mappers
-    // 3. "universal" mapper (can lead to undesirable results)
 
     ///////////////////////////////////////////////////////////////////
     // For each defined mapper:                                      //

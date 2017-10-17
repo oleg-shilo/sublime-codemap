@@ -13,19 +13,13 @@
                         "caption": "CodeMap",
                         "children": [
                             {
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/sublime-codemap/code_map.sublime-settings"
+                                "command": "edit_settings", "args":
+                                {
+                                    "base_file": "${packages}/CodeMap/code_map.sublime-settings",
+                                    "default": "[\n\t$0\n]\n"
                                 },
-                                "caption": "Settings – Default"
+                                "caption": "Edit settings"
                             },
-                            {
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/User/code_map.sublime-settings"
-                                },
-                                "caption": "Settings – User"
-                            }
                         ]
                     }
                 ]

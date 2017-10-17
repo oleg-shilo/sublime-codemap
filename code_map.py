@@ -44,9 +44,11 @@ def plugin_loaded():
     custom_languages = ['md']
     Mapper.EXTENSION, Mapper.DEPTH = "", [settings().get('depth'), {}]
 
-    dst = path.join(sublime.packages_path(), 'User', 'CodeMap')
+    user_folder = path.join(sublime.packages_path(), 'User')
+    dst = path.join(user_folder, 'CodeMap')
     mpdir = path.join(dst, 'custom_mappers')
     lng_dir = path.join(dst, 'custom_languages')
+    settings_file = path.join(user_folder, 'code_map.sublime-settings')
 
     if not path.isdir(dst):
         os.mkdir(dst)
@@ -65,6 +67,10 @@ def plugin_loaded():
 
         zip = zipfile.ZipFile(pack)
 
+        # make a copy of the settings file in User folder, if not present
+        if not path.isfile(settings_file):
+            zip.extract('code_map.sublime-settings', user_folder)
+
         for syntax in default_mappers:
             if not path.isfile(mapper_path(syntax)):
                 zip.extract('custom_mappers/code_map.'+syntax+'.py', dst)
@@ -80,6 +86,11 @@ def plugin_loaded():
     else:
         # package was installed manually
         plugin_dir = path.dirname(__file__)
+
+        # make a copy of the settings file in User folder, if not present
+        if not path.isfile(settings_file):
+            base_file = path.join(plugin_dir, 'code_map.sublime-settings')
+            shutil.copyfile(base_file, settings_file)
 
         for syntax in default_mappers:
             src_mapper = path.join(
@@ -136,8 +147,8 @@ def get_group(view):
         if w:
             return w.get_view_index(view)[0]
 
-    # I wish C# style checking was possible with Python: 
-    # return view?.window()?.get_view_index(view)[0]          
+    # I wish C# style checking was possible with Python:
+    # return view?.window()?.get_view_index(view)[0]
 
 # -------------------------
 
@@ -298,7 +309,7 @@ def synch_map(v, give_back_focus=True):
                 link = map_view.substr(line).split(':')[-1]
 
                 try:
-                    entries.append((int(link), line))    
+                    entries.append((int(link), line))
                 except:
                     continue
 
@@ -387,7 +398,7 @@ def navigate_to_line(map_view, give_back_focus=False):
             if not source_code_view:
                 source_code_view = win().open_file(
                     code_map_generator.source)
-    
+
 
     if source_code_view:
         sublime.status_message('Navigating to selected item...')
@@ -420,9 +431,9 @@ class marshaler(sublime_plugin.WindowCommand):
     '''This command marshals the specified routine call by wrapping it into the
     WindowCommand. It allows the routine to be invoked either in the main ST3 thread
     or asynchronously from an alternate thread.'''
-    
+
     '''Sample: marshaler.invoke(lambda: print('test'))'''
-     
+
     _actions = {}
 
     def _invoke(action, delay, async):
@@ -433,7 +444,7 @@ class marshaler(sublime_plugin.WindowCommand):
 
     def invoke(action, delay=10):
         marshaler._invoke(action, delay, False)
-    
+
     def invoke_async(action, delay=10):
         marshaler._invoke(action, delay, True)
 
@@ -596,7 +607,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
-        
+
         set_last_session_map_source(source)
 
         if code_map_generator.source in code_map_generator.positions.keys():
@@ -746,7 +757,7 @@ class show_code_map(sublime_plugin.TextCommand):
         groups = w.num_groups()
         current_view = self.view
         map_view = get_code_map_view()
-        
+
 
         if not map_view:            # opening Code Map
 
@@ -809,11 +820,11 @@ class show_code_map(sublime_plugin.TextCommand):
 
             CodeMapListener.active_view = current_view
             w.focus_view(map_view)
-            
+
             if is_map_view_active:
                 w.run_command("close_file")
 
-            if not is_in_same_group:    
+            if not is_in_same_group:
                 focus_source_code()
 
 
@@ -857,7 +868,7 @@ class CodeMapListener(sublime_plugin.EventListener):
         global ACTIVE
 
         if ACTIVE and view.file_name() != code_map_file():
-            refresh_map_for(view)   
+            refresh_map_for(view)
 
         # CodeMap file has been loaded but it's currently inactive
         elif view.file_name() == code_map_file():
@@ -881,10 +892,10 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         if ACTIVE: # map view is opened
             refresh_map_for(view)
-            
-            # synch_map brings map_view into focus so call it only 
-            # if it is not hidden behind other views 
-            if is_code_map_visible(): 
+
+            # synch_map brings map_view into focus so call it only
+            # if it is not hidden behind other views
+            if is_code_map_visible():
                 synch_map(view)
 
     # -----------------
@@ -922,7 +933,7 @@ class CodeMapListener(sublime_plugin.EventListener):
                 marshaler.invoke(lambda:
                     navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
                 return ("code_map_select_line", None)
-                
+
         return None
 
     # -----------------
@@ -935,7 +946,8 @@ class CodeMapListener(sublime_plugin.EventListener):
                  "prompt_select_workspace",
                  "open_recent_project_or_workspace",
                  "close_workspace",
-                 "project_manager"]
+                 "project_manager",
+                 "close_window"]
 
         if ACTIVE and command_name in reset:
 
