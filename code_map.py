@@ -48,7 +48,6 @@ def plugin_loaded():
     dst = path.join(user_folder, 'CodeMap')
     mpdir = path.join(dst, 'custom_mappers')
     lng_dir = path.join(dst, 'custom_languages')
-    settings_file = path.join(user_folder, 'code_map.sublime-settings')
 
     if not path.isdir(dst):
         os.mkdir(dst)
@@ -67,10 +66,6 @@ def plugin_loaded():
 
         zip = zipfile.ZipFile(pack)
 
-        # make a copy of the settings file in User folder, if not present
-        if not path.isfile(settings_file):
-            zip.extract('code_map.sublime-settings', user_folder)
-
         for syntax in default_mappers:
             if not path.isfile(mapper_path(syntax)):
                 zip.extract('custom_mappers/code_map.'+syntax+'.py', dst)
@@ -86,11 +81,6 @@ def plugin_loaded():
     else:
         # package was installed manually
         plugin_dir = path.dirname(__file__)
-
-        # make a copy of the settings file in User folder, if not present
-        if not path.isfile(settings_file):
-            base_file = path.join(plugin_dir, 'code_map.sublime-settings')
-            shutil.copyfile(base_file, settings_file)
 
         for syntax in default_mappers:
             src_mapper = path.join(
