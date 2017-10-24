@@ -44,7 +44,8 @@ def plugin_loaded():
     custom_languages = ['md']
     Mapper.EXTENSION, Mapper.DEPTH = "", [settings().get('depth'), {}]
 
-    dst = path.join(sublime.packages_path(), 'User', 'CodeMap')
+    user_folder = path.join(sublime.packages_path(), 'User')
+    dst = path.join(user_folder, 'CodeMap')
     mpdir = path.join(dst, 'custom_mappers')
     lng_dir = path.join(dst, 'custom_languages')
 
@@ -136,8 +137,8 @@ def get_group(view):
         if w:
             return w.get_view_index(view)[0]
 
-    # I wish C# style checking was possible with Python: 
-    # return view?.window()?.get_view_index(view)[0]          
+    # I wish C# style checking was possible with Python:
+    # return view?.window()?.get_view_index(view)[0]
 
 # -------------------------
 
@@ -275,6 +276,8 @@ def refresh_map_for(view, from_view=False):
         CURRENT_TEMP_ID = view.id()
         map_view.run_command('code_map_generator', {"source": view.id()})
         clear_map_selection()
+    scroll_left(map_view)
+
     # elif not file:
     #     win().run_command('code_map_temp_view_msg')
 
@@ -298,7 +301,7 @@ def synch_map(v, give_back_focus=True):
                 link = map_view.substr(line).split(':')[-1]
 
                 try:
-                    entries.append((int(link), line))    
+                    entries.append((int(link), line))
                 except:
                     continue
 
@@ -351,6 +354,10 @@ def scroll(v):
     line = v.line(v.sel()[0].a)
     v.show_at_center(line.a)
 
+def scroll_left(v):
+    viewport_position = v.text_to_layout(v.visible_region().a)[1]
+    v.set_viewport_position((0, viewport_position), False)
+
 # -----------------
 
 
@@ -387,7 +394,7 @@ def navigate_to_line(map_view, give_back_focus=False):
             if not source_code_view:
                 source_code_view = win().open_file(
                     code_map_generator.source)
-    
+
 
     if source_code_view:
         sublime.status_message('Navigating to selected item...')
@@ -416,31 +423,31 @@ def navigate_to_line(map_view, give_back_focus=False):
 
 # =============================================================================
 
-class marshaler(sublime_plugin.WindowCommand):
+class code_map_marshaler(sublime_plugin.WindowCommand):
     '''This command marshals the specified routine call by wrapping it into the
     WindowCommand. It allows the routine to be invoked either in the main ST3 thread
     or asynchronously from an alternate thread.'''
-    
-    '''Sample: marshaler.invoke(lambda: print('test'))'''
-     
+
+    '''Sample: code_map_marshaler.invoke(lambda: print('test'))'''
+
     _actions = {}
 
     def _invoke(action, delay, async):
         import uuid
         action_id = str(uuid.uuid4())
-        marshaler._actions[action_id] = (action, delay)
-        win().run_command("marshaler", {"action_id": action_id, "async": async} )
+        code_map_marshaler._actions[action_id] = (action, delay)
+        win().run_command("code_map_marshaler", {"action_id": action_id, "async": async} )
 
     def invoke(action, delay=10):
-        marshaler._invoke(action, delay, False)
-    
+        code_map_marshaler._invoke(action, delay, False)
+
     def invoke_async(action, delay=10):
-        marshaler._invoke(action, delay, True)
+        code_map_marshaler._invoke(action, delay, True)
 
     def run(self, **args):
         async = args['async']
         action_id = args['action_id']
-        action, delay = marshaler._actions.pop(action_id)
+        action, delay = code_map_marshaler._actions.pop(action_id)
         if async:
             sublime.set_timeout_async(action, delay)
         else:
@@ -596,7 +603,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
-        
+
         set_last_session_map_source(source)
 
         if code_map_generator.source in code_map_generator.positions.keys():
@@ -746,7 +753,7 @@ class show_code_map(sublime_plugin.TextCommand):
         groups = w.num_groups()
         current_view = self.view
         map_view = get_code_map_view()
-        
+
 
         if not map_view:            # opening Code Map
 
@@ -809,11 +816,11 @@ class show_code_map(sublime_plugin.TextCommand):
 
             CodeMapListener.active_view = current_view
             w.focus_view(map_view)
-            
+
             if is_map_view_active:
                 w.run_command("close_file")
 
-            if not is_in_same_group:    
+            if not is_in_same_group:
                 focus_source_code()
 
 
@@ -841,6 +848,15 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     # -----------------
 
+    def reactivate(self):
+        global ACTIVE
+
+        if not ACTIVE and get_code_map_view():
+            ACTIVE = True
+            win().run_command('synch_code_map')
+
+    # -----------------
+
     def on_deactivated(self, view):
 
         if ACTIVE:
@@ -857,7 +873,7 @@ class CodeMapListener(sublime_plugin.EventListener):
         global ACTIVE
 
         if ACTIVE and view.file_name() != code_map_file():
-            refresh_map_for(view)   
+            refresh_map_for(view)
 
         # CodeMap file has been loaded but it's currently inactive
         elif view.file_name() == code_map_file():
@@ -881,10 +897,10 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         if ACTIVE: # map view is opened
             refresh_map_for(view)
-            
-            # synch_map brings map_view into focus so call it only 
-            # if it is not hidden behind other views 
-            if is_code_map_visible(): 
+
+            # synch_map brings map_view into focus so call it only
+            # if it is not hidden behind other views
+            if is_code_map_visible():
                 synch_map(view)
 
     # -----------------
@@ -919,10 +935,10 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         if ACTIVE and double_click:
             if view.file_name() == code_map_file():
-                marshaler.invoke(lambda:
+                code_map_marshaler.invoke(lambda:
                     navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
                 return ("code_map_select_line", None)
-                
+
         return None
 
     # -----------------
@@ -937,11 +953,18 @@ class CodeMapListener(sublime_plugin.EventListener):
                  "close_workspace",
                  "project_manager"]
 
-        if ACTIVE and command_name in reset:
+        if ACTIVE:
+            if command_name in reset:
 
-            # resetting variables and stopping CodeMap until CodeMap file is
-            # loaded again
-            reset_globals()
+                # resetting variables and stopping CodeMap until CodeMap file is
+                # loaded again
+                reset_globals()
+                sublime.set_timeout_async(lambda: self.reactivate(), 2000)
+
+            elif command_name == 'close_window':
+                if get_code_map_view():
+                    ACTIVE = False
+                    sublime.set_timeout_async(lambda: self.reactivate(), 500)
 
         return None
 
