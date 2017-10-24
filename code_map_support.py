@@ -323,3 +323,29 @@ class universal_mapper():
 
 
 # ===============================================================================
+
+class csharp_mapper():
+
+    def send_syntax_request(file, operation):
+        try:
+            syntaxerPort = int(os.environ.get(
+                'CSSCRIPT_SYNTAXER_PORT', 'not_configured'))
+            if syntaxerPort == 'not_configured':
+                return None
+
+            clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            clientsocket.connect(('localhost', syntaxerPort))
+            request = '-client:{0}\n-op:{1}\n-script:{2}'.format(
+                os.getpid(), operation, file)
+            clientsocket.send(request.encode('utf-8'))
+            response = clientsocket.recv(1024 * 5)
+            return response.decode('utf-8')
+        except socket_error as serr:
+            if serr.errno == errno.ECONNREFUSED:
+                print(serr)
+
+    # -----------------
+
+    def generate(file):
+        return csharp_mapper.send_syntax_request(
+            file, 'codemap').replace('\r', '')
