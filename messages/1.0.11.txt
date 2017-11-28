@@ -1,0 +1,5 @@
+Features/Changes:
+
+1. Restored accidentally removed csharp_mapper embedded.
+2. Issue #17: Issues modifying existing custom mappers - python, for example
+3. Assorted User Experience improvements
