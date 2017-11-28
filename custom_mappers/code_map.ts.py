@@ -19,10 +19,12 @@ try:
 except:
     installed = []
 
-# you can support custom language definitions, with a fallback if not installed
+# `map_syntax` is a syntax highlighting that will be applied to CodeMap at runtime
+# you can set it to the custom or built-in language definitions
 if 'TypeScript' in installed:
     map_syntax = 'Packages/TypeScript/TypeScript.tmLanguage'
 else:
+    # fallback as TypeScript is not installed
     map_syntax = 'Packages/Python/Python.tmLanguage'
 
 def generate(file):
@@ -64,14 +66,14 @@ class ts_mapper():
                         last_indent = indent_level
                         if code_line.startswith('export '+keyword+' '):
                             line = line.replace('export '+keyword+' ', keyword+' ')
-                        
-                        display_line = line.rpartition('implements')[0]    
+
+                        display_line = line.rpartition('implements')[0]
                         if not display_line:
-                            display_line = line.rpartition('{')[0]    
+                            display_line = line.rpartition('{')[0]
                         if not display_line:
                             display_line = line.rstrip()
 
-                        # class CSScriptHoverProvider implements HoverProvider {     
+                        # class CSScriptHoverProvider implements HoverProvider {
                         info = (line_num,
                                 keyword,
                                 display_line.split('(')[0].split(':')[0].rstrip()+' {}', # suffix brackets make it valid TS syntax
@@ -80,16 +82,16 @@ class ts_mapper():
 
                 # miss C# here :)
                 # info = parse_as_class('class', line) ??
-                #        parse_as_class('interface', line) ?? 
-                #        parse_as_class('whatever', line) 
-                        
+                #        parse_as_class('interface', line) ??
+                #        parse_as_class('whatever', line)
+
                 info = parse_as_class('class', line)
-                
-                if not info:    
+
+                if not info:
                     info = parse_as_class('interface', line)
 
                 if info:
-                    pass     
+                    pass
 
                 elif code_line.startswith('function ') or code_line.startswith('export function ') :
                     if last_type == 'function' and indent_level > last_indent:
@@ -100,7 +102,7 @@ class ts_mapper():
                             'function',
                             line.split('(')[0].rstrip()+'()',
                             indent_level)
-                
+
                 elif code_line.startswith('public '):
                     last_type = 'public '
                     last_indent = indent_level
@@ -138,6 +140,5 @@ class ts_mapper():
             last_indent = indent
             last_type = content_type
 
-        # print('111 qqqqqqqqqq')
         # print(map)
         return map
