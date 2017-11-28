@@ -167,7 +167,12 @@ class universal_mapper():
         elif extension in exts:
             map = mappers[exts.index(extension)]
             universal_mapper.mapping = map
-            syntax = sets.get(map)['syntax']
+
+            map_sets = sets.get(map)
+            if map_sets == None:
+                return None
+
+            syntax = map_sets['syntax']
 
             try:
                 with codecs.open(file, "r", encoding='utf8') as f:
