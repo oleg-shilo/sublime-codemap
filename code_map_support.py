@@ -141,7 +141,6 @@ class universal_mapper():
         else:
             DEPTH[0] = sets.get('depth')
 
-
         # last resort
         if universal:
             universal_mapper.mapping = "universal"
@@ -167,13 +166,14 @@ class universal_mapper():
 
         elif extension in exts:
             map = mappers[exts.index(extension)]
-
             universal_mapper.mapping = map
+
             map_sets = sets.get(map)
             if map_sets == None:
                 return None
 
             syntax = map_sets['syntax']
+
             try:
                 with codecs.open(file, "r", encoding='utf8') as f:
                     file = f.read()

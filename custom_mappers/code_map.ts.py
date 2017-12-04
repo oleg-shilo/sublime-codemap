@@ -140,6 +140,5 @@ class ts_mapper():
             last_indent = indent
             last_type = content_type
 
-        # print('111 qqqqqqqqqq')
         # print(map)
         return map
