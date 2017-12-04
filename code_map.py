@@ -489,6 +489,8 @@ class code_map_generator(sublime_plugin.TextCommand):
                 # try with mappers defined in files next
                 script = 'code_map.'+extension+'.py'
 
+                # print('trying to get...', script)
+
                 if script in MAPPERS:
 
                     using_universal_mapper = False
@@ -506,9 +508,6 @@ class code_map_generator(sublime_plugin.TextCommand):
 
             except Exception as e:
                 print(e)
-
-            if file.lower().endswith('.py'):
-                return Mapper.python_mapper.generate, py_syntax
 
     # -----------------
 
