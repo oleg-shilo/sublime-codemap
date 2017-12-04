@@ -1,13 +1,13 @@
 # Custom mapper sample for CodeMap plugin
-# 
+#
 # This script defines a mandatory `def generate(file)` and global variable map_syntax:
-# - `def generate(file)` 
-#    The routine analyses the file content and produces the 'code map' representing the content structure. 
+# - `def generate(file)`
+#    The routine analyses the file content and produces the 'code map' representing the content structure.
 #    In this case it builds the list of sections (lines that start with `#` character) in the md file.
-# 
+#
 # - `map_syntax`
 #    Optional attribute that defines syntax highlight to be used for the code map text
-# 
+#
 # The map format: <item title>:<item position in source code>
 #
 # You may need to restart Sublime Text to reload the mapper

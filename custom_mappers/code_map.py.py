@@ -19,10 +19,12 @@ try:
 except:
     installed = []
 
-# you can support custom language definitions, with a fallback if not installed
+# `map_syntax` is a syntax highlighting that will be applied to CodeMap at runtime
+# you can set it to the custom or built-in language definitions
 if 'MagicPython' in installed:
     map_syntax = 'Packages/MagicPython/grammars/MagicPython.tmLanguage'
 else:
+    # fallback as MagicPython is not installed
     map_syntax = 'Packages/Python/Python.tmLanguage'
 
 def generate(file):
