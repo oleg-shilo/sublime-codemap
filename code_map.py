@@ -917,7 +917,8 @@ class CodeMapListener(sublime_plugin.EventListener):
             double_click = command_name == 'drag_select' and 'by' in args and args['by'] == 'words'
 
             if double_click and view.file_name() == code_map_file:
-                navigate_to_line(view, give_back_focus=not CodeMapListener.navigating)
+                code_map_marshaler.invoke(lambda:
+                    navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
                 return ("code_map_select_line", None)
 
     # -----------------
