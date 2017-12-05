@@ -4,6 +4,11 @@
         "command": "show_code_map"
     },
     {
+        "caption": "CodeMap: Render From View",
+        "command": "synch_code_map",
+        "args": {"from_view": true}
+    },
+    {
         "caption": "CodeMap: Reveal in CodeMap",
         "command": "synch_code_map"
     }

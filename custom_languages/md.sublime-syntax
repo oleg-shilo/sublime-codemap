@@ -2,6 +2,7 @@
 ---
 # http://www.sublimetext.com/docs/3/syntax.html
 name: CodeMapMarkdown
+hidden: true
 file_extensions:
   - mdown
   - markdown
