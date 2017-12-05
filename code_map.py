@@ -388,7 +388,7 @@ def navigate_to_line(map_view, give_back_focus=False):
         new_selection = source_code_view.line(point)
         source_code_view.sel().clear()
         source_code_view.sel().add(new_selection)
-        source_code_view.show(new_selection, True)
+        source_code_view.show_at_center(new_selection)
 
         sublime.set_timeout(lambda: scroll(source_code_view), 20)
 
@@ -915,19 +915,15 @@ class CodeMapListener(sublime_plugin.EventListener):
         if ACTIVE:
 
             double_click = command_name == 'drag_select' and 'by' in args and args['by'] == 'words'
-            if not double_click:
-                return
 
-            if view.file_name() == code_map_file:
-                code_map_marshaler.invoke(lambda:
-                    navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
+            if double_click and view.file_name() == code_map_file:
+                navigate_to_line(view, give_back_focus=not CodeMapListener.navigating)
                 return ("code_map_select_line", None)
 
     # -----------------
 
     def on_window_command(self, window, command_name, args):
         '''Very unstable switching projects, safety measure'''
-        global TEMP_VIDS, TEMP_VIEWS, CURRENT_TEMP_ID, ACTIVE
 
         reset = ["prompt_open_project_or_workspace",
                  "prompt_select_workspace",
