@@ -105,6 +105,9 @@ def plugin_loaded():
     # make a list of the available mappers
     CUSTOM_MAPPERS = os.listdir(mpdir)
 
+    # reactivate on start-up
+    reactivate()
+
 # -------------------------
 
 
@@ -134,6 +137,14 @@ def get_group(view):
 
     # I wish C# style checking was possible with Python:
     # return view?.window()?.get_view_index(view)[0]
+
+
+def reactivate():
+    global ACTIVE
+
+    if get_code_map_view():
+        CodeMapListener.map_group = win().get_view_index(get_code_map_view())[0]
+        ACTIVE = True
 
 # -------------------------
 
@@ -235,8 +246,7 @@ def refresh_map_for(view, from_view=False):
     def generate_from(file):
         global Generated_Map
 
-        syn = view.settings().get('syntax')
-        map = code_map_generator.get_mapper(file, syn)
+        map = code_map_generator.get_mapper(file, view)
         if map:
             Generated_Map = map
             map_view.run_command('code_map_generator', {"source": file})
@@ -452,7 +462,7 @@ class code_map_generator(sublime_plugin.TextCommand):
 
     # -----------------
 
-    def get_mapper(file, view_syntax=None):
+    def get_mapper(file, view=None):
         """"In addition to the file path, the current view syntax is passed to the function, to
         attempt detection from it rather than the file extension alone."""
 
@@ -472,7 +482,7 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                 # try with mappers defined in the settings first
                 # pass also the current view syntax, so that it will be checked too
-                mapper = Mapper.universal_mapper.evaluate(file, extension, view_syntax)
+                mapper = Mapper.universal_mapper.evaluate(file, extension, view)
                 if mapper:
                     return mapper
 
@@ -827,16 +837,6 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     # -----------------
 
-    def reactivate(self):
-        global ACTIVE
-
-        if get_code_map_view():
-            CodeMapListener.map_group = win().get_view_index(get_code_map_view())[0]
-            ACTIVE = True
-            win().run_command('synch_code_map')
-
-    # -----------------
-
     def on_deactivated(self, view):
 
         if ACTIVE:
@@ -857,7 +857,7 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         # CodeMap file has been loaded but it's currently inactive
         elif get_code_map_view():
-            self.reactivate()
+            reactivate()
 
     # -----------------
 
@@ -884,7 +884,7 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         # CodeMap file has been loaded but it's currently inactive
         elif get_code_map_view():
-            self.reactivate()
+            reactivate()
 
     # -----------------
 
@@ -937,7 +937,7 @@ class CodeMapListener(sublime_plugin.EventListener):
 
             # resetting variables and stopping CodeMap until CodeMap file is found again
             reset_globals()
-            sublime.set_timeout_async(lambda: self.reactivate(), 2000)
+            sublime.set_timeout_async(lambda: reactivate())
 
     # -----------------
 

@@ -54,14 +54,14 @@ To start working with CodeMap just make the map view visible (e.g. [alt+m, alt+m
 Press `cmd+shift+p`. Type `codemap` to see the available commands:
 
 * *__Toggle Visibility__* - Show/Hide CodeMap view.
-The CodeMap view is always placed in the most right column (group) of the active window. If `show_in_new_group` is set to `true`, a new group will be created.
-Default keybinding is **`Alt+m, Alt+m`**
+The CodeMap view is always placed in the most right column (group) of the active window. If `show_in_new_group` is set to `true`, a new group will be created.  
+Default keybinding is **`Alt+m  Alt+m`**
 
-* *__Reveal in CodeMap__* - Select code tree node that corresponds the caret position in the code (active view)
-Default keybinding is **`Alt+m, Alt+.`**
+* *__Reveal in CodeMap__* - Select code tree node that corresponds the caret position in the code (active view).  
+Default keybinding is **`Alt+m  Alt+.`**
 
-* *__Render From View__* - Attempt to render CodeMap from a view that isn't bound to a phisycal file.
-Default keybinding is **`Alt+m, Alt+,`**
+* *__Render From View__* - Attempt to render CodeMap from a view that isn't bound to a phisycal file.  
+Default keybinding is **`Alt+m  Alt+,`**
 
 <a name="custom-mapping"></a>
 ## Custom mapping
