@@ -74,7 +74,11 @@ In order to activate the mapper its script needs to be properly named and placed
 
   Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\code_map.md.py"`
 
-You can associate a syntax to the custom mapper, so that the CodeMap will use it. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself.
+You can associate a syntax with the custom mapper, so that the CodeMap will use it for rendering the map content. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself:
+```Python
+map_syntax = 'Packages/Python/Python.tmLanguage'
+```
+Python syntax seems to be a good highlighting schema for majority of mapping scenarios.
 
 <a name="universal-mapper"></a>
 ### Universal Mapper
