@@ -12,6 +12,7 @@ Plugin currently supports building the code tree for Python. Support for C# is i
 - [Usage](#usage)
 - [Command Palette](#command-palette)
 - [Custom mapping](#custom-mapping)
+    - [Custom mapper](#custom-mapper)
     - [Universal Mapper](#universal-mapper)
     - [Map depth](#map-depth)
 - [Navigation with Keyboard](#navigation-with-keyboard)
@@ -66,6 +67,9 @@ Default keybinding is **`Alt+m  Alt+,`**
 <a name="custom-mapping"></a>
 ## Custom mapping
 
+<a name="custom-mapper"></a>
+### Custom mapper
+
 You can extend the built-in functionality with custom mappers. A Custom Mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure.
 
 You can find the [code_map.md.py](custom_mappers/code_map.md.py) sample in the source code. This mapper builds the list of markdown sections in the given text file.
@@ -74,7 +78,11 @@ In order to activate the mapper its script needs to be properly named and placed
 
   Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\code_map.md.py"`
 
-You can associate a syntax to the custom mapper, so that the CodeMap will use it. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself.
+You can associate a syntax with the custom mapper, so that the CodeMap will use it for rendering the map content. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself:
+```Python
+map_syntax = 'Packages/Python/Python.tmLanguage'
+```
+Python syntax seems to be a good highlighting schema for majority of mapping scenarios.
 
 <a name="universal-mapper"></a>
 ### Universal Mapper
