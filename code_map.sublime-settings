@@ -41,10 +41,13 @@
     // present in this list. Don't put anything in this list that isn't
     // defined below.
     "syntaxes":     [
-                        ["universal",   ""],
-                        ["text",        "txt"],
-                        ["python",      "py"]
-                    ],
+                        ["universal",     ""],
+                        ["text",          "txt"],
+                        ["python",        "py"],
+                        ["Settings",      "sublime-settings"],
+                        ["Syntax",        "sublime-syntax"],
+                        ["Ini",           "ini"],
+                ],
 
     ///////////////////////////////////////////////////////////////////
     // For each defined mapper:                                      //
@@ -129,6 +132,84 @@
                 "prefix": "",
                 "suffix": "()",
                 "syntax": "Packages/Python/Python.tmLanguage"
+            },
+    "Settings": {
+                "regex":
+                [
+                    [
+                        "^\".+\"",
+                        "\"(.+)\":",
+                        "\\g<1>:",
+                        false
+                    ],
+                    [
+                        ": +true,",
+                        "true",
+                        "True",
+                        true
+                    ],
+                    [
+                        ": +false,",
+                        "false",
+                        "False",
+                        true
+                    ],
+                    [
+                        ": +\\[$",
+                        "\\[",
+                        "[]",
+                        true
+                    ],
+                    [
+                        ": +\\{$",
+                        "\\{",
+                        "{}",
+                        true
+                    ],
+                ],
+                "indent": 0,
+                "obligatory indent": false,
+                "empty line in map before": "",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "",
+                "syntax": "Packages/Python/Python.tmLanguage"
+            },
+    "Syntax": {
+                "regex":
+                [
+                    [
+                        "^(contexts:|\\w+:)$",
+                        "",
+                        "",
+                        false
+                    ]
+                ],
+                "indent": 2,
+                "obligatory indent": false,
+                "empty line in map before": "",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "",
+                "syntax": "Packages/YAML/YAML.sublime-syntax"
+            },
+    "Ini": {
+                "regex":
+                [
+                    [
+                        "^\\[.*$",
+                        "",
+                        "",
+                        false
+                    ]
+                ],
+                "indent": 0,
+                "obligatory indent": false,
+                "empty line in map before": "class",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "",
+                "syntax": "Packages/Text/Plain text.tmLanguage"
             },
 
 }

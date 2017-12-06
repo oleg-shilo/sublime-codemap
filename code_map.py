@@ -21,17 +21,18 @@ py_syntax = 'Packages/Python/Python.tmLanguage'
 md_syntax = 'Packages/Markdown/Markdown.sublime-syntax'
 cs_syntax = 'Packages/C#/C#.tmLanguage'
 txt_syntax = 'Packages/Text/Plain text.tmLanguage'
-MAPPERS = None
+CUSTOM_MAPPERS = None
 ACTIVE = False
 TEMP_VIDS = []
 TEMP_VIEWS = {}
 CURRENT_TEMP_ID = None
+code_map_file = None
 
 # -------------------------
 
 
 def plugin_loaded():
-    global MAPPERS, ACTIVE, using_universal_mapper
+    global ACTIVE, CUSTOM_MAPPERS, using_universal_mapper, code_map_file
 
     map_view = get_code_map_view()
     if map_view:
@@ -39,10 +40,11 @@ def plugin_loaded():
         CodeMapListener.map_group = win().get_view_index(map_view)[0]
 
     using_universal_mapper = True
+    code_map_file = path.join(sublime.packages_path(), 'User', 'CodeMap', 'Code - Map')
 
     default_mappers = ['md', 'py', 'ts']
     custom_languages = ['md']
-    Mapper.EXTENSION, Mapper.DEPTH = "", [settings().get('depth'), {}]
+    Mapper.DEPTH = [settings().get('depth'), {}]
 
     user_folder = path.join(sublime.packages_path(), 'User')
     dst = path.join(user_folder, 'CodeMap')
@@ -83,15 +85,13 @@ def plugin_loaded():
         plugin_dir = path.dirname(__file__)
 
         for syntax in default_mappers:
-            src_mapper = path.join(
-                plugin_dir, 'custom_mappers', 'code_map.'+syntax+'.py')
+            src_mapper = path.join(plugin_dir, 'custom_mappers', 'code_map.'+syntax+'.py')
             dst_mapper = mapper_path(syntax)
             if not path.isfile(dst_mapper):
                 shutil.copyfile(src_mapper, dst_mapper)
 
         for syntax in custom_languages:
-            src_syntax = path.join(
-                plugin_dir, 'custom_languages', syntax+'.sublime-syntax')
+            src_syntax = path.join(plugin_dir, 'custom_languages', syntax+'.sublime-syntax')
             dst_syntax = syntax_path(syntax)
             if not path.isfile(syntax):
                 shutil.copyfile(src_syntax, dst_syntax)
@@ -103,7 +103,10 @@ def plugin_loaded():
             shutil.copyfile(src_keymap, dst_keymap)
 
     # make a list of the available mappers
-    MAPPERS = os.listdir(mpdir)
+    CUSTOM_MAPPERS = os.listdir(mpdir)
+
+    # reactivate on start-up
+    reactivate()
 
 # -------------------------
 
@@ -114,13 +117,11 @@ def is_compressed_package():
 
 
 def mapper_path(syntax):
-    return path.join(sublime.packages_path(), 'User', 'CodeMap',
-                     'custom_mappers', 'code_map.'+syntax+'.py')
+    return path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers', 'code_map.'+syntax+'.py')
 
 
 def syntax_path(syntax):
-    return path.join(sublime.packages_path(), 'User', 'CodeMap',
-                     'custom_languages', syntax+'.sublime-syntax')
+    return path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_languages', syntax+'.sublime-syntax')
 
 
 def settings():
@@ -132,34 +133,33 @@ def win():
 
 
 def get_group(view):
-    if view:
-        w = view.window()
-        if w:
-            return w.get_view_index(view)[0]
+    return win().get_view_index(view)[0]
 
     # I wish C# style checking was possible with Python:
     # return view?.window()?.get_view_index(view)[0]
 
+
+def reactivate():
+    global ACTIVE
+
+    if get_code_map_view():
+        CodeMapListener.map_group = win().get_view_index(get_code_map_view())[0]
+        ACTIVE = True
+
 # -------------------------
 
 
-def code_map_file():
-    dst = path.join(sublime.packages_path(), 'User', 'CodeMap')
-    return path.join(dst, 'Code - Map')
-
 def is_code_map(view):
-    return view.file_name() == code_map_file()
+    return view.file_name() == code_map_file
 
 def is_code_map_visible():
     map = get_code_map_view()
-    if map == win().active_view_in_group(get_group(map)):
-        return True
-    else:
-        return False
+    if map:
+        return map == win().active_view_in_group(get_group(map))
 
 def get_code_map_view():
     for v in win().views():
-        if v.file_name() == code_map_file():
+        if v.file_name() == code_map_file:
             return v
 
 # -----------------
@@ -177,7 +177,7 @@ def reset_globals():
 
 
 def create_codemap_group():
-    '''Adds a column on the right, and scales down the layout'''
+    """Adds a column on the right, and scales down the layout."""
     w = win()
     layout = win().get_layout()
     cols = layout['cols']
@@ -202,7 +202,7 @@ def create_codemap_group():
 
 
 def reset_layout():
-    '''Removes the Code Map group, and scales up the layout'''
+    """Removes the Code Map group, and scales up the layout."""
     w = win()
     layout = w.get_layout()
     cols = layout['cols']
@@ -235,8 +235,7 @@ def refresh_map_for(view, from_view=False):
         # avoid certain error messages and clear abnormal selections
         try:
             if map_view.sel():
-                lines = map_view.split_by_newlines(
-                    map_view.sel()[0])
+                lines = map_view.split_by_newlines(map_view.sel()[0])
             if len(lines) > 1:
                 map_view.sel().clear()
         except:
@@ -247,7 +246,7 @@ def refresh_map_for(view, from_view=False):
     def generate_from(file):
         global Generated_Map
 
-        map = code_map_generator.get_mapper(file)
+        map = code_map_generator.get_mapper(file, view)
         if map:
             Generated_Map = map
             map_view.run_command('code_map_generator', {"source": file})
@@ -268,18 +267,18 @@ def refresh_map_for(view, from_view=False):
         return
     elif file and path.basename(file) == "Code - Map":
         return
-    elif file:
+    elif file and os.path.isfile(file):
         generate_from(file)
-    elif from_view or view.id() in TEMP_VIDS:
+
+    # buffer is bound to a non-existant path, render from view
+    # 'or file' here is not a mistake (it's used for files in zipped archives)
+    elif view.id() in TEMP_VIDS or file or from_view:
         if view.id() not in TEMP_VIDS:
             TEMP_VIDS.append(view.id())
         CURRENT_TEMP_ID = view.id()
         map_view.run_command('code_map_generator', {"source": view.id()})
         clear_map_selection()
     scroll_left(map_view)
-
-    # elif not file:
-    #     win().run_command('code_map_temp_view_msg')
 
 # -----------------
 
@@ -293,7 +292,7 @@ def synch_map(v, give_back_focus=True):
             code_view_line, _ = v.rowcol(v.sel()[0].a)
             prev_map_line = None
 
-            lines = map_view.lines(sublime.Region(0, map_view.size()))
+            lines = map_view.lines(Region(0, map_view.size()))
 
             entries = []
             index = 0
@@ -309,7 +308,7 @@ def synch_map(v, give_back_focus=True):
 
             for member_line_num, line in entries:
                 # added +1 so that it works for the first line of the function
-                if member_line_num > code_view_line+1:
+                if member_line_num > code_view_line + 1:
                     break
                 else:
                     prev_map_line = line
@@ -338,21 +337,21 @@ def focus_source_code():
 
 def get_last_session_map_source():
     try:
-        with open(code_map_file()+'.source', "r") as file:
+        with open(code_map_file+'.source', "r") as file:
              return file.read()
     except:
         return None
 
 def set_last_session_map_source(source):
     try:
-        with open(code_map_file()+'.source', "w") as file:
+        with open(code_map_file+'.source', "w") as file:
              file.write(source if source else "")
     except:
         pass
 
 def scroll(v):
     line = v.line(v.sel()[0].a)
-    v.show_at_center(line.a)
+    v.show(line.a, True)
 
 def scroll_left(v):
     viewport_position = v.text_to_layout(v.visible_region().a)[1]
@@ -374,8 +373,7 @@ def navigate_to_line(map_view, give_back_focus=False):
     line_text = map_view.substr(line_region)
     line_num = 1
     try:
-        line_num = int(line_text.split(':')[-1].strip(
-            ).split(' ')[-1])
+        line_num = int(line_text.split(':')[-1].strip().split(' ')[-1])
     except:
         # navigate only if a valid map node is clicked or has caret
         return
@@ -389,11 +387,9 @@ def navigate_to_line(map_view, give_back_focus=False):
             code_map_generator.source = get_last_session_map_source()
 
         if code_map_generator.source:
-            source_code_view = win().find_open_file(
-                code_map_generator.source)
+            source_code_view = win().find_open_file(code_map_generator.source)
             if not source_code_view:
-                source_code_view = win().open_file(
-                    code_map_generator.source)
+                source_code_view = win().open_file(code_map_generator.source)
 
 
     if source_code_view:
@@ -424,11 +420,12 @@ def navigate_to_line(map_view, give_back_focus=False):
 # =============================================================================
 
 class code_map_marshaler(sublime_plugin.WindowCommand):
-    '''This command marshals the specified routine call by wrapping it into the
-    WindowCommand. It allows the routine to be invoked either in the main ST3 thread
-    or asynchronously from an alternate thread.'''
+    """This command marshals the specified routine call by wrapping it into the WindowCommand. It
+    allows the routine to be invoked either in the main ST3 thread or asynchronously from an
+    alternate thread.
 
-    '''Sample: code_map_marshaler.invoke(lambda: print('test'))'''
+    Sample: code_map_marshaler.invoke(lambda: print('test'))
+    """
 
     _actions = {}
 
@@ -465,7 +462,10 @@ class code_map_generator(sublime_plugin.TextCommand):
 
     # -----------------
 
-    def get_mapper(file):
+    def get_mapper(file, view=None):
+        """"In addition to the file path, the current view syntax is passed to the function, to
+        attempt detection from it rather than the file extension alone."""
+
         # Default map syntax is Python. It just looks better than others
         global using_universal_mapper
 
@@ -481,8 +481,8 @@ class code_map_generator(sublime_plugin.TextCommand):
                 extension = ext[1:].lower()
 
                 # try with mappers defined in the settings first
-                mapper = Mapper.universal_mapper.evaluate(
-                                                file, extension)
+                # pass also the current view syntax, so that it will be checked too
+                mapper = Mapper.universal_mapper.evaluate(file, extension, view)
                 if mapper:
                     return mapper
 
@@ -491,20 +491,17 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                 # print('trying to get...', script)
 
-                if script in MAPPERS:
+                if script in CUSTOM_MAPPERS:
 
                     using_universal_mapper = False
                     script = mapper_path(extension)
-                    mapper = SourceFileLoader(
-                        extension+"_mapper", script).load_module()
-                    syntax = mapper.map_syntax if hasattr(
-                        mapper, 'map_syntax') else py_syntax
+                    mapper = SourceFileLoader(extension + "_mapper", script).load_module()
+                    syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
 
                     return mapper.generate, syntax
 
-                # if nothing helps, use the universal mapping
-                return Mapper.universal_mapper.evaluate(
-                                    file, extension, universal=True)
+                # if nothing helps, try using the universal mapping
+                return Mapper.universal_mapper.evaluate(file, extension, universal=True)
 
             except Exception as e:
                 print(e)
@@ -512,10 +509,11 @@ class code_map_generator(sublime_plugin.TextCommand):
     # -----------------
 
     def view_to_map(view):
+        """Not a physical file, try to generate map directly from view content."""
 
         file_syntax = view.settings().get('syntax')
         supported = Mapper.settings().get('syntaxes')
-        supported.remove(['universal', ""])
+        supported.remove(['universal', ""])     # restrict to custom defined syntaxes
 
         matched_syntax = False
         for syntax in supported:
@@ -527,6 +525,7 @@ class code_map_generator(sublime_plugin.TextCommand):
             return ("Could not decode view.", txt_syntax)
 
         content = view.substr(Region(0, view.size()))
+        # skip Mapper.universal_mapper.evaluate, generate directly from view content
         mapper = Mapper.universal_mapper.generate(content)
         if mapper:
             TEMP_VIEWS[view.id()] = view
@@ -546,14 +545,12 @@ class code_map_generator(sublime_plugin.TextCommand):
         oldSource = code_map_generator.source
         if oldSource:
             selected_line = None
-            viewport_position = map_view.text_to_layout(
-                                    map_view.visible_region().a)[1]
+            viewport_position = map_view.text_to_layout(map_view.visible_region().a)[1]
 
             if len(map_view.sel()) > 0 and map_view.sel()[0]:
                 selected_line = map_view.sel()[0]
 
-            code_map_generator.positions[oldSource] = (
-                viewport_position, selected_line)
+            code_map_generator.positions[oldSource] = (viewport_position, selected_line)
 
         # generate new map
         source = args['source']
@@ -574,15 +571,15 @@ class code_map_generator(sublime_plugin.TextCommand):
                     # probably not necessary but to be sure
                     map = code_map_generator.get_mapper(source)
 
-                '''using_universal_mapper variable is set in get_mapper, when
-                it comes back here the script knows already where to go'''
+                """using_universal_mapper variable is set in get_mapper, when
+                it comes back here the script knows already where to go."""
 
                 # refresh map -> get_mapper -> sets variable -> then here
 
-                '''this detour seems necessary to me because the variable
+                """This detour seems necessary to me because the variable
                 can't be set here, it can only be set where the file type is
                 being evaluated, but how the result must be processed is
-                defined here'''
+                defined here."""
 
                 if using_universal_mapper:
                     (map, map_syntax) = map
@@ -597,7 +594,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         except Exception as err:
             print('code_map.generate:', err)
 
-        all_text = sublime.Region(0, map_view.size())
+        all_text = Region(0, map_view.size())
 
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
@@ -636,6 +633,7 @@ class code_map_increase_depth(sublime_plugin.TextCommand):
         elif d < 4:
             fD[file] = d + 1
 
+        win().status_message('  Current CodeMap Depth: %d' % fD[file])
         refresh_map_for(self.view)
         synch_map(self.view)
 
@@ -655,6 +653,7 @@ class code_map_decrease_depth(sublime_plugin.TextCommand):
         elif d > 0:
             fD[file] = d - 1
 
+        win().status_message('  Current CodeMap Depth: %d' % fD[file])
         refresh_map_for(self.view)
         synch_map(self.view)
 
@@ -682,8 +681,7 @@ class navigate_code_map(sublime_plugin.TextCommand):
                 CodeMapListener.nav_view = v
                 CodeMapListener.navigating = True
                 synch_map(v, give_back_focus=False)
-                sublime.set_timeout(
-                    lambda: navigate_to_line(cm, give_back_focus=False), 10)
+                sublime.set_timeout(lambda: navigate_to_line(cm, give_back_focus=False), 10)
             else:
                 return
 
@@ -704,9 +702,8 @@ class navigate_code_map(sublime_plugin.TextCommand):
 
 
 class synch_code_map(sublime_plugin.TextCommand):
-    '''This command also activates the CodeMap if the view is present, but
-    CodeMap is inactive because ST has just been restarted, or the project has
-    been switched'''
+    """This command also activates the CodeMap if the view is present, but CodeMap is inactive
+    because ST has just been restarted, or the project has been switched."""
     # -----------------
 
     def run(self, edit, from_view=False):
@@ -745,7 +742,7 @@ class show_code_map(sublime_plugin.TextCommand):
     # -----------------
 
     def run(self, edit):
-        global ACTIVE, CURRENT_TEMP_ID, TEMP_VIDS, TEMP_VIEWS
+        global ACTIVE, CURRENT_TEMP_ID, TEMP_VIDS, TEMP_VIEWS, CUSTOM_MAPPERS
 
         w = win()
         Mapper.block_max_pane(True)
@@ -753,10 +750,10 @@ class show_code_map(sublime_plugin.TextCommand):
         current_view = self.view
         map_view = get_code_map_view()
 
-
         if not map_view:            # opening Code Map
 
             ACTIVE = True
+            CUSTOM_MAPPERS = os.listdir(path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers'))
 
             CodeMapListener.active_view = current_view
 
@@ -787,41 +784,35 @@ class show_code_map(sublime_plugin.TextCommand):
                     code_map_group = create_codemap_group()
                     CodeMapListener.map_group = code_map_group
 
-            with open(code_map_file(), "w") as file:
+            with open(code_map_file, "w") as file:
                 file.write('')
 
-            map_view = w.open_file(code_map_file())
-            map_view.settings().set("margin", 8)
+            map_view = w.open_file(code_map_file)
+
+            # default margin: 8
+            map_view.settings().set("margin", settings().get('codemap_margin', 8))
+
+            # allow custom font face/size, it's optional and it doesn't need to be in settings
+            if settings().has('codemap_font_size'):
+                map_view.settings().set("font_size", settings().get('codemap_font_size'))
+            if settings().has('codemap_font_face'):
+                map_view.settings().set("font_face", settings().get('codemap_font_face'))
+
             map_view.settings().set("word_wrap", False)
             map_view.settings().set("gutter", False)
             map_view.settings().set("draw_white_space", "none")
             w.set_view_index(map_view, code_map_group, 0)
             map_view.sel().clear()
 
-            is_in_same_group = (code_map_group == get_group(current_view))
+            w.run_command("synch_code_map")
+            focus_source_code()
 
-            if not is_in_same_group:
-                # cannot use CodeMapListener.active_view as it will be immediately
-                # overwritten by other views from the new group being activated
-                w.focus_view(current_view)
-            else:
-                w.focus_view(map_view)
-                if code_map_group > 0: # move focus to the left group to trigger map refresh
-                    w.focus_group(code_map_group-1)
-
-        else:                       # closing Code Map
-            is_map_view_active = w.active_view_in_group(get_group(map_view)) == map_view
-            is_in_same_group = get_group(map_view) == get_group(current_view)
+        elif ACTIVE:                       # closing Code Map
 
             CodeMapListener.active_view = current_view
-            w.focus_view(map_view)
-
-            if is_map_view_active:
-                w.run_command("close_file")
-
-            if not is_in_same_group:
-                focus_source_code()
-
+            g, i = w.get_view_index(map_view)
+            w.run_command("close_by_index", {"group": g, "index": i})
+            focus_source_code()
 
 # =============================================================================
 
@@ -834,8 +825,7 @@ class code_map_select_line(sublime_plugin.TextCommand):
         line_region = self.view.line(point)
         self.view.sel().clear()
         self.view.sel().add(line_region)
-        sublime.set_timeout_async(
-            lambda: self.view.sel().add(line_region), 10)
+        sublime.set_timeout_async(lambda: self.view.sel().add(line_region), 10)
 
 # =============================================================================
 
@@ -844,15 +834,6 @@ class CodeMapListener(sublime_plugin.EventListener):
     active_view, map_view, map_group = None, None, None
     closing_code_map, opening_code_map = False, False
     nav_view, navigating, skip = None, False, False
-
-    # -----------------
-
-    def reactivate(self):
-        global ACTIVE
-
-        if not ACTIVE and get_code_map_view():
-            ACTIVE = True
-            win().run_command('synch_code_map')
 
     # -----------------
 
@@ -871,19 +852,18 @@ class CodeMapListener(sublime_plugin.EventListener):
     def on_load(self, view):
         global ACTIVE
 
-        if ACTIVE and view.file_name() != code_map_file():
+        if ACTIVE and view.file_name() != code_map_file:
             refresh_map_for(view)
 
         # CodeMap file has been loaded but it's currently inactive
-        elif view.file_name() == code_map_file():
-            CodeMapListener.map_group = win().get_view_index(view)[0]
-            ACTIVE = True
+        elif get_code_map_view():
+            reactivate()
 
     # -----------------
 
     def on_close(self, view):
 
-        if ACTIVE and view.file_name() == code_map_file():
+        if ACTIVE and view.file_name() == code_map_file:
 
             reset_globals()
             if settings().get('close_empty_group_on_closing_map', False):
@@ -894,13 +874,17 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_post_save_async(self, view):
 
-        if ACTIVE: # map view is opened
+        if ACTIVE:  # map view is opened
             refresh_map_for(view)
 
             # synch_map brings map_view into focus so call it only
             # if it is not hidden behind other views
             if is_code_map_visible():
                 synch_map(view)
+
+        # CodeMap file has been loaded but it's currently inactive
+        elif get_code_map_view():
+            reactivate()
 
     # -----------------
 
@@ -926,46 +910,34 @@ class CodeMapListener(sublime_plugin.EventListener):
     # -----------------
 
     def on_text_command(self, view, command_name, args):
-        '''Process double-click on code map view'''
+        """Process double-click on code map view"""
 
-        double_click = command_name == 'drag_select' \
-                       and 'by' in args.keys() \
-                       and args['by'] == 'words'
+        if ACTIVE:
 
-        if ACTIVE and double_click:
-            if view.file_name() == code_map_file():
+            double_click = command_name == 'drag_select' and 'by' in args and args['by'] == 'words'
+
+            if double_click and view.file_name() == code_map_file:
                 code_map_marshaler.invoke(lambda:
                     navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
                 return ("code_map_select_line", None)
-
-        return None
 
     # -----------------
 
     def on_window_command(self, window, command_name, args):
         '''Very unstable switching projects, safety measure'''
-        global TEMP_VIDS, TEMP_VIEWS, CURRENT_TEMP_ID, ACTIVE
 
         reset = ["prompt_open_project_or_workspace",
                  "prompt_select_workspace",
                  "open_recent_project_or_workspace",
                  "close_workspace",
-                 "project_manager"]
+                 "project_manager",
+                 'close_window']
 
-        if ACTIVE:
-            if command_name in reset:
+        if ACTIVE and command_name in reset:
 
-                # resetting variables and stopping CodeMap until CodeMap file is
-                # loaded again
-                reset_globals()
-                sublime.set_timeout_async(lambda: self.reactivate(), 2000)
-
-            elif command_name == 'close_window':
-                if get_code_map_view():
-                    ACTIVE = False
-                    sublime.set_timeout_async(lambda: self.reactivate(), 500)
-
-        return None
+            # resetting variables and stopping CodeMap until CodeMap file is found again
+            reset_globals()
+            sublime.set_timeout_async(lambda: reactivate())
 
     # -----------------
 
