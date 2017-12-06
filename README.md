@@ -12,6 +12,7 @@ Plugin currently supports building the code tree for Python. Support for C# is i
 - [Usage](#usage)
 - [Command Palette](#command-palette)
 - [Custom mapping](#custom-mapping)
+    - [Custom mapper](#custom-mapper)
     - [Universal Mapper](#universal-mapper)
     - [Map depth](#map-depth)
 - [Navigation with Keyboard](#navigation-with-keyboard)
@@ -65,6 +66,9 @@ Default keybinding is **`Alt+m  Alt+,`**
 
 <a name="custom-mapping"></a>
 ## Custom mapping
+
+<a name="custom-mapper"></a>
+### Custom mapper
 
 You can extend the built-in functionality with custom mappers. A Custom Mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure.
 
