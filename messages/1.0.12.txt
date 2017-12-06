@@ -1,0 +1,6 @@
+Features/Changes:
+
+1. Stability improvements.
+2. Force reactivation at start, some optimization in the universal mapper
+3. Fix for keyboard navigation
+4. Auto-loading new custom mappers without ST3 restart
