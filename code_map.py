@@ -277,6 +277,9 @@ def refresh_map_for(view, from_view=False):
     transient = view == w.transient_view_in_group(w.active_group())
     is_in_same_group = get_group(map_view) == get_group(view)
 
+    # indentation type for current view
+    Mapper.universal_mapper.Using_tabs = not view.settings().get('translate_tabs_to_spaces')
+
     if not map_view or widget or transient or is_in_same_group:
         return
     elif file and path.basename(file) == "Code - Map":
@@ -529,13 +532,11 @@ class code_map_generator(sublime_plugin.TextCommand):
         supported = Mapper.settings().get('syntaxes')
         supported.remove(['universal', ""])     # restrict to custom defined syntaxes
 
-        matched_syntax = False
-        for syntax in supported:
-            if syntax[0] in file_syntax.lower():
-                matched_syntax = True
+        for i, syntax in enumerate(supported):
+            if syntax[0].lower() in file_syntax.lower():
+                Mapper.universal_mapper.mapping = supported[i][0]
                 break
-
-        if not matched_syntax:
+        else:
             return ("Could not decode view.", txt_syntax)
 
         content = view.substr(Region(0, view.size()))
@@ -904,10 +905,11 @@ class CodeMapListener(sublime_plugin.EventListener):
 
     def on_activated_async(self, view):
 
-        if ACTIVE and view == get_code_map_view():
-            CodeMapListener.map_group = win().get_view_index(view)[0]
+        if ACTIVE:
 
-        elif ACTIVE:
+            if view == get_code_map_view():
+                CodeMapListener.map_group = win().get_view_index(view)[0]
+                return
 
             # ignore view in the map_view group as in this case
             # the source and map cannot be visible at the same time
