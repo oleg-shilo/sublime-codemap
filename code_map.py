@@ -58,6 +58,17 @@ def plugin_loaded():
     if not path.isdir(lng_dir):
         os.mkdir(lng_dir)
 
+    # rename legacy mappers (if any)
+    for syntax in default_mappers:
+        mapper_script = mapper_path(syntax)
+        mapper_script_legacy = mapper_path(syntax, 'code_map.')
+
+        if path.isfile(mapper_script_legacy):
+            try:
+                os.rename(mapper_script_legacy, mapper_script)
+            except :
+                pass
+
     if is_compressed_package():
         ipath = sublime.installed_packages_path()
         # package was installed via Package Control
@@ -70,7 +81,7 @@ def plugin_loaded():
 
         for syntax in default_mappers:
             if not path.isfile(mapper_path(syntax)):
-                zip.extract('custom_mappers/code_map.'+syntax+'.py', dst)
+                zip.extract('custom_mappers/'+syntax+'.py', dst)
 
         for syntax in custom_languages:
             if not path.isfile(syntax_path(syntax)):
@@ -85,7 +96,7 @@ def plugin_loaded():
         plugin_dir = path.dirname(__file__)
 
         for syntax in default_mappers:
-            src_mapper = path.join(plugin_dir, 'custom_mappers', 'code_map.'+syntax+'.py')
+            src_mapper = path.join(plugin_dir, 'custom_mappers', syntax+'.py')
             dst_mapper = mapper_path(syntax)
             if not path.isfile(dst_mapper):
                 shutil.copyfile(src_mapper, dst_mapper)
@@ -116,8 +127,11 @@ def is_compressed_package():
     return not plugin_dir.startswith(sublime.packages_path())
 
 
-def mapper_path(syntax):
-    return path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers', 'code_map.'+syntax+'.py')
+def mapper_path(syntax, prefix=None):
+    prefix_str = ''
+    if prefix:
+        prefix_str = prefix
+    return path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers', prefix_str + syntax+'.py')
 
 
 def syntax_path(syntax):
@@ -487,7 +501,7 @@ class code_map_generator(sublime_plugin.TextCommand):
                     return mapper
 
                 # try with mappers defined in files next
-                script = 'code_map.'+extension+'.py'
+                script = extension+'.py'
 
                 # print('trying to get...', script)
 
