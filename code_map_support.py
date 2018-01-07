@@ -147,13 +147,12 @@ class universal_mapper():
             syntax = os.path.splitext(os.path.split(view.settings().get('syntax'))[1])[0]
             mappers = [m[0] for m in sets.get('syntaxes')]
             for i, m in enumerate(mappers):
-                if syntax == m:
+                if m.lower() == syntax.lower():
                     universal_mapper.mapping = mappers[i]
                     syntax = sets.get(mappers[i])['syntax']
                     try:
                         with open(file, "r", encoding='utf8') as f:
                             content = f.read()
-                        universal_mapper.Using_tabs = view.settings().get('translate_tabs_to_spaces')
                         return (universal_mapper.generate(content), syntax)
                     except Exception as err:
                         print(err)
@@ -169,32 +168,28 @@ class universal_mapper():
         unsupported = [syn for syn in sets.get('exclusions')]
 
         # get mappers/extensions defined in the settings
-        mappers = [syn for syn in sets.get('syntaxes')]
-        exts = [ext[1] for ext in mappers]
-        mappers = [mapper[0] for mapper in mappers]
+        mappers = [m[0] for m in sets.get('syntaxes')]
+        exts = [m[1] for m in sets.get('syntaxes')]
 
         # TODO: universal_mapper.Guess
         universal_mapper.Guess = None
 
         # attempt to map a known file type as defined in the settings
         if extension in unsupported:
-            return ("Unsupported file type",
-                    "Packages/Text/Plain text.tmLanguage")
+            return ("Unsupported file type", "Packages/Text/Plain text.tmLanguage")
 
         elif extension in exts:
             map = mappers[exts.index(extension)]
             universal_mapper.mapping = map
 
-            map_sets = sets.get(map)
-            if map_sets == None:
+            mapper = sets.get(map)
+            if not mapper:  # wrong config
                 return None
-
-            syntax = map_sets['syntax']
 
             try:
                 with open(file, "r", encoding='utf8') as f:
                     file = f.read()
-                return (universal_mapper.generate(file), syntax)
+                return (universal_mapper.generate(file), mapper['syntax'])
             except Exception as err:
                 print(err)
                 return None
@@ -236,11 +231,13 @@ class universal_mapper():
 
         # -----------------
 
-        def find_indent(line):
-            i = re.match(r"\s+(?:[^\S])", line)
+        def find_indent(line, tab):
+            i = re.match(tab + r"+", line)
             if i:
-                x, ni = re.subn(r"\s", "", i.group(0))
-                if indent_size and ni % indent_size:
+                x, ni = re.subn(tab, "", i.group(0))
+                if universal_mapper.Using_tabs:
+                    ...
+                elif indent_size and ni % indent_size:
                     # skip incorrect indents
                     return 0
             else:
@@ -299,12 +296,15 @@ class universal_mapper():
         Map, indents = '', []
         line_num, printed_lines = 0, []
         lines = file.split('\n')
-        tab = "\t" if universal_mapper.Using_tabs else " "
 
         mapping, guess = universal_mapper.mapping, universal_mapper.Guess
 
+        if universal_mapper.Using_tabs:
+            tab, indent_size = "\t", 1
+        else:
+            tab, indent_size = " ", settings().get(mapping)['indent']
+
         oblig_indent = settings().get(mapping)['obligatory indent']
-        indent_size = settings().get(mapping)['indent']
         new_line_before = settings().get(mapping)['empty line in map before']
         npos = settings().get(mapping)['line numbers before']
         pre = settings().get(mapping)['prefix']
@@ -323,7 +323,7 @@ class universal_mapper():
             _line = is_func(patterns, line.lstrip())
             if not _line:
                 continue
-            indent = find_indent(line)
+            indent = find_indent(line, tab)
             line = obl_indent(line, indent)
 
             if indent <= DEPTH[0]:
