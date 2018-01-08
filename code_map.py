@@ -287,7 +287,7 @@ def refresh_map_for(view, from_view=False):
     elif file and os.path.isfile(file):
         generate_from(file)
 
-    # buffer is bound to a non-existant path, render from view
+    # buffer is bound to a non-existent path, render from view
     # 'or file' here is not a mistake (it's used for files in zipped archives)
     elif view.id() in TEMP_VIDS or file or from_view:
         if view.id() not in TEMP_VIDS:
