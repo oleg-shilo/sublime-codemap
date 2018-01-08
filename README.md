@@ -72,11 +72,11 @@ Default keybinding is **`Alt+m  Alt+,`**
 
 You can extend the built-in functionality with custom mappers. A Custom Mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure.
 
-You can find the [code_map.md.py](custom_mappers/code_map.md.py) sample in the source code. This mapper builds the list of markdown sections in the given text file.
+You can find the [md.py](custom_mappers/md.py) sample in the source code. This mapper builds the list of markdown sections in the given text file.
 In order to activate the mapper its script needs to be properly named and placed in the special folder: `<Packages>\User\CodeMap\custom_mappers`. The name of the mapper file must follow a special naming convention:
-`"code_map.<extension>.py"`
+`"<extension>.py"`
 
-  Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\code_map.md.py"`
+  Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\md.py"`
 
 You can associate a syntax with the custom mapper, so that the CodeMap will use it for rendering the map content. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself:
 ```Python

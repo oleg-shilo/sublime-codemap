@@ -10,7 +10,7 @@ from importlib.machinery import SourceFileLoader
 import CodeMap.code_map_support as Mapper
 from CodeMap.code_map_support import NavigateCodeMap as Nav
 
-# version = 1.0.11
+# version = 1.0.13
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')

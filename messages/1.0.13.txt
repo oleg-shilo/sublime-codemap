@@ -1,0 +1,4 @@
+Features/Changes:
+
+1. Issue #23: Issue with custom_mappers naming system - Python uses decimals to...
+2. Issue #24: Functions in a python class are not indented in the CodeMap interface if tabs are used to indent
