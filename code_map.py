@@ -156,8 +156,10 @@ def get_group(view):
 def reactivate():
     global ACTIVE
 
-    if get_code_map_view():
-        CodeMapListener.map_group = win().get_view_index(get_code_map_view())[0]
+    map_view = get_code_map_view()
+    if map_view:
+        CodeMapListener.map_group = win().get_view_index(map_view)[0]
+        map_view.show(0)    # scroll up the map
         ACTIVE = True
 
 # -------------------------
@@ -886,6 +888,10 @@ class CodeMapListener(sublime_plugin.EventListener):
                 reset_layout()
             sublime.set_timeout_async(focus_source_code)
 
+            # try to reactivate, in case another window with Codemap is open,
+            # or a new workspace has been loaded
+            sublime.set_timeout_async(lambda: reactivate())
+
     # -----------------
 
     def on_post_save_async(self, view):
@@ -927,7 +933,7 @@ class CodeMapListener(sublime_plugin.EventListener):
     # -----------------
 
     def on_text_command(self, view, command_name, args):
-        """Process double-click on code map view"""
+        """Process double-click on code map view."""
 
         if ACTIVE:
 
@@ -941,20 +947,21 @@ class CodeMapListener(sublime_plugin.EventListener):
     # -----------------
 
     def on_window_command(self, window, command_name, args):
-        '''Very unstable switching projects, safety measure'''
+        """
+        Prone to crash when switching projects.
+        Resetting variables and stopping until CodeMap file is found again.
+        """
 
-        reset = ["prompt_open_project_or_workspace",
-                 "prompt_select_workspace",
-                 "open_recent_project_or_workspace",
-                 "close_workspace",
-                 "project_manager",
-                 'close_window']
+        reset = [
+            "prompt_open_project_or_workspace",
+            "prompt_select_workspace",
+            "open_recent_project_or_workspace",
+            "close_workspace",
+            "project_manager"
+        ]
 
         if ACTIVE and command_name in reset:
-
-            # resetting variables and stopping CodeMap until CodeMap file is found again
             reset_globals()
-            sublime.set_timeout_async(lambda: reactivate())
 
     # -----------------
 
