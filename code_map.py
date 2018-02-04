@@ -66,7 +66,7 @@ def plugin_loaded():
         if path.isfile(mapper_script_legacy):
             try:
                 os.rename(mapper_script_legacy, mapper_script)
-            except :
+            except:
                 pass
 
     if is_compressed_package():
@@ -300,35 +300,11 @@ def refresh_map_for(view, from_view=False):
 # -----------------
 
 
-##
-## Updated to include bug fix ( where ( v == None ) wasn't checked when go was called because ΔT has passed and the user could've closed the file. ). Prevented rubberbanding by making sure the same window was used ( so old window isn't refocused ) and make sure the same file is still being looked at ( to make sure the previous file isn't re-opened when the user switched from it - I could simply compare VIEW ID and then I don't need to look at window, etc.. so I may change from that ) - Acecool
-##
 def synch_map(v, give_back_focus=True):
 
-    ## Grabs the active view from the active window and reads the filename from it...
-    ## Note: We can do it this way, or use the view passed to the function - but we need to do it the former for the go function because v may have changed... For now we'll use v to grab the current file...
-    ## last_current_file =  = sublime.active_window( ).active_view( ).file_name( )
-    last_current_file = v.file_name( )
-    last_window = sublime.active_window( )
-
-    ## Allow go to be called - but cancel it if the file switched...
     def go():
-        ## Since T time has passed - we relearn data that may have changed.. This includes looking at variables passed through our scope - v is the VIEW / file we're mapping... v could be None now so if it is, then there's no point in proceeding..
-        if ( v == None ):
-            return
-
-        ## Grab the active window - again T time has passed so we need to relearn data that may have changed...
-        current_window = sublime.active_window( )
-
-        ## If the active window has changed, prevent the previous window from refocusing... No need to proceed if the window has changed...
-        if ( current_window != last_window ):
-            return
-
-        ## Set the current file ( after the timeout ) for a comparison.. We don't use v because this is a function called after T time has passed and v will still be the same... We need to grab the active window, the active view within it, and the file-name of that view... If they have changed, we don't resync it..
-        current_file = current_window.active_view( ).file_name( )
-
-        ## If the current file isn't what the sync_map function was called with, then we do not allow sync_map to continue otherwise it'll cause rubberbanding back to a file we've lost interest in...
-        if ( current_file != last_current_file ):
+        # no valid view, or view has changed since the function has been called
+        if not v or v != win().active_view():
             return
 
         map_view = get_code_map_view()
@@ -364,12 +340,9 @@ def synch_map(v, give_back_focus=True):
                 map_view.show(prev_map_line.a)
                 map_view.window().focus_view(map_view)
 
-        ## Make the give back focus a part of go because it uses timeout anyway...
         if give_back_focus:
             win().focus_view(v)
 
-    # apply a timeout to the whole function, add an additional timeout if it's
-    # necessary to focus back to the original view - Acecool: But only if we haven't switched to a different file...
     sublime.set_timeout(go, 10)
 
 # -----------------
@@ -457,9 +430,7 @@ def navigate_to_line(map_view, give_back_focus=False):
             map_view.sel().add(Region(0, 0))
             Nav.highlight_line(map_view)
 
-        if not give_back_focus:
-            return
-        else:
+        if give_back_focus:
             win().focus_view(source_code_view)
     else:
         sublime.message_dialog('Initialize code map first. For example by saving the document.')
@@ -480,7 +451,7 @@ class code_map_marshaler(sublime_plugin.WindowCommand):
         import uuid
         action_id = str(uuid.uuid4())
         code_map_marshaler._actions[action_id] = (action, delay)
-        win().run_command("code_map_marshaler", {"action_id": action_id, "async": async} )
+        win().run_command("code_map_marshaler", {"action_id": action_id, "async": async})
 
     def invoke(action, delay=10):
         code_map_marshaler._invoke(action, delay, False)
