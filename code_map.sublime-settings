@@ -5,9 +5,7 @@
     "codemap_width": 0.17,
 
     // some extensions can cause trouble if they aren't defined in advance, or
-    // even if you try to define them. Extensions in this list will be ignored
-    // by the universal mapper, but will be interpreted if a custom mapper is
-    // present in User/CodeMap/custom_mappers
+    // even if you try to define them. Extensions in this list will be ignored.
     "exclusions":   [
                         "json"
                     ],
