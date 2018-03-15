@@ -883,6 +883,11 @@ class CodeMapListener(sublime_plugin.EventListener):
 
         if ACTIVE and view.file_name() == code_map_file:
 
+            # Issue #35: Issue + Possible Solution:
+            #            Toggling Code Map with show_code_map cmd causes active view / file to close
+            #            ( whether using the keybind or calling directly )
+            view.set_scratch(False)
+
             reset_globals()
             if settings().get('close_empty_group_on_closing_map', False):
                 reset_layout()
