@@ -161,10 +161,10 @@ _code_\__map.sublime-settings_
 ```js
 {
     "close_empty_group_on_closing_map": true,
-    "show_in_new_group": true
+    "show_in_new_group": true,
     "codemap_width": 0.17,
     "codemap_font_size": 8,
     "codemap_font_face": "Verily Serif Mono",
-    "codemap_margin": 8,
+    "codemap_margin": 8
 }
 ```
