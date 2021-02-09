@@ -146,6 +146,8 @@ and transform groom the regex match into a presentable item in the code map tree
          take the next pattern and apply it to on the last match from the prev matching
          . . .
 
+Note the line text that is tested with regex is left trimmed before the test. Meaning that if your code has line `"  say_hello():"` the text that is tested with regex is `"say_hello():"`   
+
 <a name="map-depth"></a>
 ### Map depth
 
