@@ -129,6 +129,25 @@ Create a new `typescript` section an fill it with the the following content:
              },
 ```
 
+And this is how the universal mapper settings are used at runtime:
+
+`"regex"`is  is a collection of regex matching definitions to test a given string against.
+
+Each item (definition) consist of a few regex expressions to identify a syntax declaration
+and transform groom the regex match into a presentable item in the code map tree
+
+    1. Pattern to detect if the string is a declaration (e.g. a class). It is if it matches the pattern
+    2. Replacement pattern to be used against a declaration string
+    3. Replacement value to be used against a declaration string
+    4. instead of testing string test its last matching+grooming result. Only applicable if multiple 
+       patterns are defined. 
+       Basically it is like this:
+         take the pattern def ind apply it on the string, save the matching result
+         take the next pattern and apply it to on the last match from the prev matching
+         . . .
+
+Note the line text that is tested with regex is left trimmed before the test. Meaning that if your code has line `"  say_hello():"` the text that is tested with regex is `"say_hello():"`   
+
 <a name="map-depth"></a>
 ### Map depth
 
