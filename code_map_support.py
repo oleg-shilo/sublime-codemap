@@ -206,8 +206,28 @@ class universal_mapper():
 
         def is_func(patterns, string):
 
+            # patterns is a collection of regex matching definitions to test a given string against.
+            # Each item (definition) consist of a few regex expressions to identify a syntax declaration
+            # and transform groom the regex match into a presentable item in the code map tree
+            # Sample:
+            #     [
+            # 1.      "^(class |function |export class |interface ).*$", 
+            # 2.      "[(:{].*$",                                        
+            # 3.      "",
+            # 4.      false
+            #      ]
+            # 1. Pattern to detect if the string is a declaration (e.g. a class). It is if it matches the pattern
+            # 2. Replacement pattern to be used against a declaration string
+            # 3. Replacement value to be used against a declaration string
+            # 4. instead of testing string test its last matching+grooming result. Only applicable if multiple 
+            #    patterns are defined. 
+            #    Basically it is like this:
+            #      take the pattern def ind apply it on the string, save the matching result
+            #      take the next pattern and apply it to on the last match from the prev matching
+            #      . . .
+
             def search(string, popped=False):
-                r = pat[0].search(string)
+                r = pat[0].search(string) 
                 if r:
                     if pat[1] or pat[2]:
                         r = pat[1].sub(pat[2], string)
@@ -320,7 +340,8 @@ class universal_mapper():
             if len(line) == 0:
                 continue
 
-            _line = is_func(patterns, line.lstrip())
+            # _line = is_func(patterns, line.lstrip())
+            _line = is_func(patterns, line)
             if not _line:
                 continue
             indent = find_indent(line, tab)
