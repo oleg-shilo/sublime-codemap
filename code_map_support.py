@@ -225,6 +225,8 @@ class universal_mapper():
             #      take the pattern def ind apply it on the string, save the matching result
             #      take the next pattern and apply it to on the last match from the prev matching
             #      . . .
+            # Note the line text that is tested with regex is left trimmed before the test. Meaning that if your 
+            # code has line " say_hello():" the text that is tested with regex is "say_hello():"
 
             def search(string, popped=False):
                 r = pat[0].search(string) 
