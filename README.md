@@ -154,6 +154,7 @@ the text that is tested with regex is
 ```
 "say_hello():"
 ```   
+Some further reading on the subject is [here](https://github.com/oleg-shilo/sublime-codemap/issues/37#issuecomment-776656432).
 
 <a name="map-depth"></a>
 ### Map depth
