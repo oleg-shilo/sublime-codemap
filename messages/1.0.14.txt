@@ -1,0 +1,4 @@
+Features/Changes:
+
+1. Added Rexx syntax support
+2. Some stability improvements (e.g. error handling)

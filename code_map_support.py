@@ -342,8 +342,8 @@ class universal_mapper():
             if len(line) == 0:
                 continue
 
-            # _line = is_func(patterns, line.lstrip())
-            _line = is_func(patterns, line)
+            _line = is_func(patterns, line.lstrip())
+            # _line = is_func(patterns, line)
             if not _line:
                 continue
             indent = find_indent(line, tab)

@@ -41,6 +41,7 @@
     "syntaxes":     [
                         ["universal",     ""],
                         ["text",          "txt"],
+                        ["Rexx",          "rex"],
                         ["python",        "py"],
                         ["Settings",      "sublime-settings"],
                         ["Syntax",        "sublime-syntax"],
@@ -209,5 +210,23 @@
                 "suffix": "",
                 "syntax": "Packages/Text/Plain text.tmLanguage"
             },
+      "Rexx"  : {
+                "regex":
+                [
+                    [
+                        "^(?!')(\\S+:)\\s.*$",
+                        "[(:].*$",
+                        "",
+                        false
+                    ]
+                ],
+                "indent": 4,
+                "obligatory indent": false,
+                "empty line in map before": "",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "()",
+                "syntax": "Packages/Text/Plain text.tmLanguage"
+    },
 
 }

@@ -556,6 +556,9 @@ class code_map_generator(sublime_plugin.TextCommand):
     def run(self, edit, **args):
         global Generated_Map
 
+        if self.view == None:
+            return
+
         map_view = self.view
         map_view.set_read_only(False)
 
@@ -614,6 +617,12 @@ class code_map_generator(sublime_plugin.TextCommand):
 
         all_text = Region(0, map_view.size())
 
+        if map_view == None:
+            return
+
+        if map == None:
+            map = ''
+                
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
@@ -838,12 +847,12 @@ class show_code_map(sublime_plugin.TextCommand):
 class code_map_select_line(sublime_plugin.TextCommand):
 
     def run(self, edit):
-
-        point = self.view.sel()[0].a
-        line_region = self.view.line(point)
-        self.view.sel().clear()
-        self.view.sel().add(line_region)
-        sublime.set_timeout_async(lambda: self.view.sel().add(line_region), 10)
+        if self.view:
+            point = self.view.sel()[0].a
+            line_region = self.view.line(point)
+            self.view.sel().clear()
+            self.view.sel().add(line_region)
+            sublime.set_timeout_async(lambda: self.view.sel().add(line_region), 10)
 
 # =============================================================================
 
