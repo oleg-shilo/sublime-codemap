@@ -385,11 +385,11 @@ class csharp_mapper():
 
     def send_syntax_request(file, operation):
         try:
-            syntaxerPort = int(os.environ.get(
-                'CSSCRIPT_SYNTAXER_PORT', 'not_configured'))
-            if syntaxerPort == 'not_configured':
-                return None
 
+            syntaxerPort = sublime.load_settings("cs-script.sublime-settings").get('syntaxer_port')
+            if syntaxerPort == None:
+                return None
+            
             clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             clientsocket.connect(('localhost', syntaxerPort))
             request = '-client:{0}\n-op:{1}\n-script:{2}'.format(

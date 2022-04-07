@@ -10,7 +10,7 @@ from importlib.machinery import SourceFileLoader
 import CodeMap.code_map_support as Mapper
 from CodeMap.code_map_support import NavigateCodeMap as Nav
 
-# version = 1.0.13
+# version = 1.0.14
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')
@@ -491,7 +491,9 @@ class code_map_generator(sublime_plugin.TextCommand):
 
         if file:
             if file.lower().endswith('.cs'):
-                if 'CSSCRIPT_SYNTAXER_PORT' in os.environ.keys():
+                syntaxer = sublime.load_settings("cs-script.sublime-settings").get('syntaxer_port')
+
+                if syntaxer:
                     using_universal_mapper = False
                     return Mapper.csharp_mapper.generate, py_syntax
 

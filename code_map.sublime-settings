@@ -43,6 +43,7 @@
                         ["text",          "txt"],
                         ["Rexx",          "rex"],
                         ["python",        "py"],
+                        ["ruby",          "rb"],
                         ["Settings",      "sublime-settings"],
                         ["Syntax",        "sublime-syntax"],
                         ["Ini",           "ini"],
@@ -131,6 +132,24 @@
                 "prefix": "",
                 "suffix": "()",
                 "syntax": "Packages/Python/Python.tmLanguage"
+            },
+    "ruby": {
+                "regex":
+                [
+                    [
+                        "^(class |def ).*$",
+                        "[(:].*$",
+                        "",
+                        false
+                    ]
+                ],
+                "indent": 2,
+                "obligatory indent": false,
+                "empty line in map before": "class",
+                "line numbers before": false,
+                "prefix": "",
+                "suffix": "()",
+                "syntax": "Packages/Ruby/Ruby.tmLanguage"
             },
     "Settings": {
                 "regex":
