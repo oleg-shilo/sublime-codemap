@@ -6,7 +6,17 @@ A plugin for displaying the code map (code structure tree) in the [Sublime Text 
 
 This plugin is a port of [PyMap](https://marketplace.visualstudio.com/items?itemName=OlegShilo.PyMap) Visual Studio extension.
 
-Plugin currently supports building the code tree for Python. Support for C# is in the pipeline. The design of plugin allows integration of the user defined _tree building_ algorithm for other languages. The _custom syntax_ integration infrastructure and and samples will  be available in the next release.
+Plugin currently supports building the code tree for: 
+- Python
+- C# 
+- text file
+- Rexx
+- Ruby
+- JSON
+- YAML
+- Ini
+ 
+The design of plugin allows integration of the user defined _tree building_ algorithm for other languages. The _custom syntax_ integration infrastructure and and samples will  be available in the next release.
 
 <!-- MarkdownTOC -->
 
