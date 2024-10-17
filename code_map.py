@@ -578,7 +578,8 @@ class code_map_generator(sublime_plugin.TextCommand):
         # generate new map
         source = args['source']
         map_syntax = py_syntax
-
+        map = None
+        
         try:
             # it's the id of the temporary view
             if type(source) != str:
