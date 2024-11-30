@@ -625,7 +625,9 @@ class code_map_generator(sublime_plugin.TextCommand):
 
         if map == None:
             map = ''
-                
+        
+        map = map.replace('<null>', "...")                
+
         map_view.replace(edit, all_text, map)
         map_view.set_scratch(True)
         code_map_generator.source = source
@@ -817,7 +819,16 @@ class show_code_map(sublime_plugin.TextCommand):
             with open(code_map_file, "w") as file:
                 file.write('')
 
-            map_view = w.open_file(code_map_file)
+            try:
+                map_view = w.open_file(code_map_file, transient)
+            except Exception as e:
+                try:
+                    map_view = w.open_file(code_map_file)
+                except Exception as e1:
+                    pass
+                pass
+            
+
 
             # default margin: 8
             map_view.settings().set("margin", settings().get('codemap_margin', 8))
