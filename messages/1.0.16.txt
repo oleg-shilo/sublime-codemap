@@ -1,0 +1,3 @@
+Features/Changes:
+
+1. Added conversion of valid empty codemap to root symbol: `<null>` ->> `...`
