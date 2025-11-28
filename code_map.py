@@ -744,27 +744,28 @@ class synch_code_map(sublime_plugin.TextCommand):
         if not ACTIVE and get_code_map_view():
             ACTIVE = True
 
-        if ACTIVE:
+        if not ACTIVE:
+            return
 
-            if self.view != get_code_map_view():
-                # ignore view in the map_view group as in this case
-                # the source and map cannot be visible at the same time
-                if get_group(self.view) == CodeMapListener.map_group:
-                    # only prepare the views(make visible) for the future synch
-                    win().focus_view(get_code_map_view())
-                    win().focus_view(CodeMapListener.active_view)
-
-                else:
-                    # sync doc -> map
-                    refresh_map_for(self.view, from_view)
-                    synch_map(self.view)
+        if self.view != get_code_map_view():
+            # ignore view in the map_view group as in this case
+            # the source and map cannot be visible at the same time
+            if get_group(self.view) == CodeMapListener.map_group:
+                # only prepare the views(make visible) for the future synch
+                win().focus_view(get_code_map_view())
+                win().focus_view(CodeMapListener.active_view)
 
             else:
-                # (an alternative approach when the sych is always ->)
-                # sync doc <- map
-                self.view.run_command("code_map_select_line")
-                f = not CodeMapListener.navigating
-                navigate_to_line(self.view, give_back_focus=f)
+                # sync doc -> map
+                refresh_map_for(self.view, from_view)
+                synch_map(self.view)
+
+        else:
+            # (an alternative approach when the sych is always ->)
+            # sync doc <- map
+            self.view.run_command("code_map_select_line")
+            f = not CodeMapListener.navigating
+            navigate_to_line(self.view, give_back_focus=f)
 
 # ===============================================================================
 
@@ -782,78 +783,83 @@ class show_code_map(sublime_plugin.TextCommand):
         current_view = self.view
         map_view = get_code_map_view()
 
-        if not map_view:            # opening Code Map
+        if map_view:
+            # Closing Code Map
 
-            ACTIVE = True
-            CUSTOM_MAPPERS = os.listdir(path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers'))
+            if ACTIVE: 
+                CodeMapListener.active_view = current_view
+                g, i = w.get_view_index(map_view)
+                w.run_command("close_by_index", {"group": g, "index": i})
+                focus_source_code()
 
-            CodeMapListener.active_view = current_view
+            return
 
-            code_map_group = -1
-            last_group = w.num_groups()-1
-            # look for Favorites in last group
-            for view in w.views_in_group(last_group):
-                file = view.file_name()
-                if file and os.path.basename(file) == 'Favorites':
-                    code_map_group = last_group
+        # opening Code Map
 
-            # Favorites not found
-            if code_map_group == -1:
-                show_in_new_group = settings().get("show_in_new_group", True)
+        ACTIVE = True
+        CUSTOM_MAPPERS = os.listdir(path.join(sublime.packages_path(), 'User', 'CodeMap', 'custom_mappers'))
 
-                if not show_in_new_group:
-                    if groups == 1:
-                        code_map_group = 1
-                        CodeMapListener.map_group = 1
-                        Mapper.set_layout_columns(2)
-                        groups = 2
+        CodeMapListener.active_view = current_view
 
-                    else:
-                        # the most right group
-                        code_map_group = groups - 1
+        code_map_group = -1
+        last_group = w.num_groups()-1
+        # look for Favorites in last group
+        for view in w.views_in_group(last_group):
+            file = view.file_name()
+            if file and os.path.basename(file) == 'Favorites':
+                code_map_group = last_group
+
+        # Favorites not found
+        if code_map_group == -1:
+            show_in_new_group = settings().get("show_in_new_group", True)
+
+            if not show_in_new_group:
+                if groups == 1:
+                    code_map_group = 1
+                    CodeMapListener.map_group = 1
+                    Mapper.set_layout_columns(2)
+                    groups = 2
 
                 else:
-                    code_map_group = create_codemap_group()
-                    CodeMapListener.map_group = code_map_group
+                    # the most right group
+                    code_map_group = groups - 1
 
-            with open(code_map_file, "w") as file:
-                file.write('')
+            else:
+                code_map_group = create_codemap_group()
+                CodeMapListener.map_group = code_map_group
 
+        with open(code_map_file, "w") as file:
+            file.write('')
+
+        try:
+            map_view = w.open_file(code_map_file, transient)
+        except Exception as e:
             try:
-                map_view = w.open_file(code_map_file, transient)
-            except Exception as e:
-                try:
-                    map_view = w.open_file(code_map_file)
-                except Exception as e1:
-                    pass
+                map_view = w.open_file(code_map_file)
+            except Exception as e1:
                 pass
-            
+            pass
+        
+
+        # default margin: 8
+        map_view.settings().set("margin", settings().get('codemap_margin', 8))
+
+        # allow custom font face/size, it's optional and it doesn't need to be in settings
+        if settings().has('codemap_font_size'):
+            map_view.settings().set("font_size", settings().get('codemap_font_size'))
+        if settings().has('codemap_font_face'):
+            map_view.settings().set("font_face", settings().get('codemap_font_face'))
+
+        map_view.settings().set("word_wrap", False)
+        map_view.settings().set("gutter", False)
+        map_view.settings().set("draw_white_space", "none")
+        w.set_view_index(map_view, code_map_group, 0)
+        map_view.sel().clear()
+
+        sublime.set_timeout_async(lambda: w.run_command("synch_code_map"))
+        focus_source_code()
 
 
-            # default margin: 8
-            map_view.settings().set("margin", settings().get('codemap_margin', 8))
-
-            # allow custom font face/size, it's optional and it doesn't need to be in settings
-            if settings().has('codemap_font_size'):
-                map_view.settings().set("font_size", settings().get('codemap_font_size'))
-            if settings().has('codemap_font_face'):
-                map_view.settings().set("font_face", settings().get('codemap_font_face'))
-
-            map_view.settings().set("word_wrap", False)
-            map_view.settings().set("gutter", False)
-            map_view.settings().set("draw_white_space", "none")
-            w.set_view_index(map_view, code_map_group, 0)
-            map_view.sel().clear()
-
-            w.run_command("synch_code_map")
-            focus_source_code()
-
-        elif ACTIVE:                       # closing Code Map
-
-            CodeMapListener.active_view = current_view
-            g, i = w.get_view_index(map_view)
-            w.run_command("close_by_index", {"group": g, "index": i})
-            focus_source_code()
 
 # =============================================================================
 
@@ -861,12 +867,18 @@ class show_code_map(sublime_plugin.TextCommand):
 class code_map_select_line(sublime_plugin.TextCommand):
 
     def run(self, edit):
-        if self.view:
-            point = self.view.sel()[0].a
-            line_region = self.view.line(point)
-            self.view.sel().clear()
-            self.view.sel().add(line_region)
-            sublime.set_timeout_async(lambda: self.view.sel().add(line_region), 10)
+        if not self.view:
+            return
+
+        selection = self.view.sel()
+        if len(selection) < 1:
+            return
+
+        point = selection[0].a
+        line_region = self.view.line(point)
+        self.view.sel().clear()
+        self.view.sel().add(line_region)
+        sublime.set_timeout_async(lambda: self.view.sel().add(line_region), 10)
 
 # =============================================================================
 
@@ -963,14 +975,15 @@ class CodeMapListener(sublime_plugin.EventListener):
     def on_text_command(self, view, command_name, args):
         """Process double-click on code map view."""
 
-        if ACTIVE:
+        if not ACTIVE:
+            return
 
-            double_click = command_name == 'drag_select' and 'by' in args and args['by'] == 'words'
+        double_click = command_name == 'drag_select' and 'by' in args and args['by'] == 'words'
 
-            if double_click and view.file_name() == code_map_file:
-                code_map_marshaler.invoke(lambda:
-                    navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
-                return ("code_map_select_line", None)
+        if double_click and view.file_name() == code_map_file:
+            code_map_marshaler.invoke(lambda:
+                navigate_to_line(view, give_back_focus = not CodeMapListener.navigating))
+            return ("code_map_select_line", None)
 
     # -----------------
 
