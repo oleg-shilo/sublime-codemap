@@ -7,10 +7,10 @@ import zipfile
 from os import path
 from sublime import Region
 from importlib.machinery import SourceFileLoader
-import CodeMap.code_map_support as Mapper
-from CodeMap.code_map_support import NavigateCodeMap as Nav
+from .code_map_support import NavigateCodeMap as Nav
+from . import code_map_support as Mapper
 
-# version = 1.0.16
+# version = 1.0.17
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap works with Sublime Text 3 only.')
