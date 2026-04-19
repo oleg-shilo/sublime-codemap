@@ -10,7 +10,7 @@ from importlib.machinery import SourceFileLoader
 from .code_map_support import NavigateCodeMap as Nav
 from . import code_map_support as Mapper
 
-# version = 1.0.18
+# version = 1.0.19
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap only works with Sublime Text 3 (or higher).')
@@ -462,10 +462,10 @@ class code_map_marshaler(sublime_plugin.WindowCommand):
         code_map_marshaler._invoke(action, delay, True)
 
     def run(self, **args):
-        async = args['async']
+        is_async = args['async']
         action_id = args['action_id']
         action, delay = code_map_marshaler._actions.pop(action_id)
-        if async:
+        if is_async:
             sublime.set_timeout_async(action, delay)
         else:
             sublime.set_timeout(action, delay)
