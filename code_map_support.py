@@ -14,7 +14,7 @@ DEPTH = [2, {}]
 
 
 def settings():
-    return sublime.load_settings("code_map.sublime-settings")
+    return sublime.load_settings("CodeMap.sublime-settings")
 
 # -----------------
 

@@ -139,7 +139,7 @@ def syntax_path(syntax):
 
 
 def settings():
-    return sublime.load_settings("code_map.sublime-settings")
+    return sublime.load_settings("CodeMap.sublime-settings")
 
 
 def win():

@@ -15,7 +15,7 @@
                             {
                                 "command": "edit_settings", "args":
                                 {
-                                    "base_file": "${packages}/CodeMap/code_map.sublime-settings",
+                                    "base_file": "${packages}/CodeMap/CodeMap.sublime-settings",
                                     "default": "[\n\t$0\n]\n"
                                 },
                                 "caption": "Edit settings"
