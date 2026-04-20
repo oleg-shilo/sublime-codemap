@@ -153,19 +153,19 @@ And this is how the universal mapper settings are used at runtime:
 `"regex"` is a collection of regex matching definitions to test a given string against.
 
 Each item (definition) consists of a few regex expressions to identify a syntax declaration
-and transform (groom) the regex match into a presentable item in the code map tree
+and transform the regex match into a presentable item in the code map tree
 
     1. Pattern to detect if the string is a declaration (e.g. a class). It is if it matches the pattern
     2. Replacement pattern to be used against a declaration string
     3. Replacement value to be used against a declaration string
-    4. Instead of testing the string, test its last matching+grooming result. Only applicable if multiple 
+    4. Instead of testing the string, test its last matching+transformation result. Only applicable if multiple 
        patterns are defined. 
        Basically, it is like this:
          Take the pattern def ind apply it to the string, save the matching result
          Take the next pattern and apply it to the last match from the previous matching
          . . .
 
-Note that the line text that is tested with regex is left trimmed before the test. Meaning that if your code has a line 
+Note that the line text that is tested with regex is left trimmed before the test. Meaning that if your code has a line.
 
 ```
 "  say_hello():"

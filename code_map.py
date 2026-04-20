@@ -104,7 +104,7 @@ def plugin_loaded():
         for syntax in custom_languages:
             src_syntax = path.join(plugin_dir, 'custom_languages', syntax+'.sublime-syntax')
             dst_syntax = syntax_path(syntax)
-            if not path.isfile(syntax):
+            if not path.isfile(dst_syntax):
                 shutil.copyfile(src_syntax, dst_syntax)
 
         # copy the context keymap file in the User subfolder

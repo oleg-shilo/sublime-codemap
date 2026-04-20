@@ -57,7 +57,9 @@
     //      [0]: what to search in the line
     //      [1]: pattern to strip from [0]
     //      [2]: optional substitution for [1]
-    //      [3]: whether the pattern will be applied on the same line
+    //      [3]: whether the every pattern, in case of multiple patterns will be 
+    //           applied on the same original document line or to the result of 
+    //           previous regex match/transformation step. 
     //
     // These elements are themselves in a list, because you can define more
     // substitution patterns. So you have a list of patterns to recognize, and
