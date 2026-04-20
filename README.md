@@ -5,7 +5,7 @@
 
 A plugin for displaying the code map (code structure tree) in the [Sublime Text 3](http://sublimetext.com "Sublime Text") editor.
 
-This plugin is a port of [PyMap](https://marketplace.visualstudio.com/items?itemName=OlegShilo.PyMap) Visual Studio extension.
+This plugin is a port of [PyMap](https://marketplace.visualstudio.com/items?itemName=OlegShilo.PyMap), a Visual Studio extension.
 
 Plugin currently supports building the code tree for: 
 - Python
@@ -41,24 +41,24 @@ Note the plugin was developed and tested against ST3 but not ST2.
 
 *__Package Control__*
 
-You can install the pluging [Package Control](https://packagecontrol.io/packages/CodeMap).
+You can install the plugin [Package Control](https://packagecontrol.io/packages/CodeMap).
 
 *__Manual__*
 
 * Remove the package, if installed, using Package Control.
 * Add a repository: `https://github.com/oleg-shilo/sublime-codemap.git`
 * Install `sublime-codemap` with Package Control.
-* Restart Sublime editor if required
+* Restart the Sublime editor if required
 
-You can also install the plugin by cloning `sublime-codemap` repository into your Packages folder or manually placing the download package there.
+You can also install the plugin by cloning `sublime-codemap` repository into your Packages folder or manually placing the downloaded package there.
 
 <a name="usage"></a>
 ## Usage
-The plugin uses a dedicated view group __Code - Map__ (on right side) to mimic a "side bar" with the content (code tree) that represents code structure of the active view content in the primary view group.
+The plugin uses a dedicated view group __Code - Map__ (on the right side) to mimic a "side bar" with the content (code tree) that represents code structure of the active view content in the primary view group.
 
-The code tree automatically refreshes on saving the active document or switching the tabs. The usage is quite simple. You can double-click a node in the code tree and this will trigger navigation to the corresponding area in the code (in active document). Alternatively you can synchronize code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from _Command Palette_ or by the configured shortcut.
+The code tree automatically refreshes on saving the active document or switching tabs. The usage is quite simple. You can double-click a node in the code tree and this will trigger navigation to the corresponding area in the code (in the active document). Alternatively, you can synchronise code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from _Command Palette_ or by the configured shortcut.
 
-To start working with CodeMap just make the map view visible (e.g. [alt+m, alt+m]) and set the focus to the code view.
+To start working with CodeMap, just make the map view visible (e.g. [alt+m, alt+m]) and set the focus to the code view.
 
 ![](images/image1.gif)
 
@@ -68,13 +68,13 @@ To start working with CodeMap just make the map view visible (e.g. [alt+m, alt+m
 Press `cmd+shift+p`. Type `codemap` to see the available commands:
 
 * *__Toggle Visibility__* - Show/Hide CodeMap view.
-The CodeMap view is always placed in the most right column (group) of the active window. If `show_in_new_group` is set to `true`, a new group will be created.  
+The CodeMap view is always placed in the rightmost column (group) of the active window. If `show_in_new_group` is set to `true`, a new group will be created.  
 Default keybinding is **`Alt+m  Alt+m`**
 
-* *__Reveal in CodeMap__* - Select code tree node that corresponds the caret position in the code (active view).  
+* *__Reveal in CodeMap__* - Select code tree node that corresponds to the caret position in the code (active view).  
 Default keybinding is **`Alt+m  Alt+.`**
 
-* *__Render From View__* - Attempt to render CodeMap from a view that isn't bound to a phisycal file.  
+* *__Render From View__* - Attempt to render CodeMap from a view that isn't bound to a physical file.  
 Default keybinding is **`Alt+m  Alt+,`**
 
 <a name="custom-mapping"></a>
@@ -83,10 +83,10 @@ Default keybinding is **`Alt+m  Alt+,`**
 <a name="custom-mapper"></a>
 ### Custom mapper
 
-You can extend the built-in functionality with custom mappers. A Custom Mapper is a Python script, which defines a mandatory `def generate(file)` routine that analyses a given file content and produces a 'code map' representing the content structure.
+You can extend the built-in functionality with custom mappers. A Custom Mapper is a Python script that defines a mandatory `def generate(file)` routine that analyses a given file's content and produces a 'code map' representing the content structure.
 
 You can find the [md.py](custom_mappers/md.py) sample in the source code. This mapper builds the list of markdown sections in the given text file.
-In order to activate the mapper its script needs to be properly named and placed in the special folder: `<Packages>\User\CodeMap\custom_mappers`. The name of the mapper file must follow a special naming convention:
+In order to activate the mapper, its script needs to be properly named and placed in the special folder: `<Packages>\User\CodeMap\custom_mappers`. The name of the mapper file must follow a special naming convention:
 `"<extension>.py"`
 
   Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\md.py"`
@@ -95,18 +95,24 @@ You can associate a syntax with the custom mapper, so that the CodeMap will use 
 ```Python
 map_syntax = 'Packages/Python/Python.tmLanguage'
 ```
-Python syntax seems to be a good highlighting schema for majority of mapping scenarios.
+Python syntax seems to be a good highlighting schema for the majority of mapping scenarios.
 
 <a name="universal-mapper"></a>
 ### Universal Mapper
 
-The _universal mapper_ is a generic Regex based mapper that can be used as an alternative for dedicated custom mappers. The mapping algorithm(s) of the _universal mapper_ is defined in the plugin settings, and is extension-dependent.
+The _universal mapper_ is a generic Regex-based mapper that can be used as an alternative to dedicated custom mappers. The mapping algorithm(s) of the _universal mapper_ is defined in the plugin settings and are extension-dependent. Access plugin settings via `Preferences > Package Settings > CodeMap > Edit Settings`.
 
-The plugin will always try to use _universal mapper_ mapping algorithm first, and only if it's not available the plugin will try to locate a dedicated custom mapper based on the active document file extension. Full instructions on how to make a custom mapper using the _universal mapper_ are included in the settings file.
+The plugin will always try to use the _universal mapper_ mapping algorithm first, and only if it's not available, the plugin will try to locate a dedicated custom mapper based on the active document file extension. 
 
-Note that if you use a custom mapper for an extension that is already defined in the _universal mapper_ settings, the latter will have precedence. Comment out the extension in the _universal mapper_ section to use your custom mapper in its place.
+The _universal mapper_ is invoked based on the regular expression patterns defined in the specific section of the mapper. This section is mapped to the document file extension that is defined in the `"syntaxes"` dictionary (another section in the settings file). Thus, the mapping resolution steps can be illustrated as follows: `file-extension > syntaxes > syntax-section > regex-patterns`
 
-The advantage of using the _universal mapper_ (and define new rules for it when needed) is that it supports by default the map depth system, with which you can alter the depth of the displayed map. Custom mappers need to support this system internally.
+A complete set of instructions on how to make a custom mapper using the _universal mapper_ is included in the settings file.
+
+Note that if you use a custom mapper for an extension that is already defined in the _universal mapper_ settings, the latter will have precedence. Comment out the extension in the _universal mapper_ section to use your custom mapper in its place. If you want to define a new syntax supported via your universal mapper, you may want to overwrite the syntax section with the added new syntax:
+
+<img width="1000" height="453" alt="image" src="https://github.com/user-attachments/assets/df637b6f-a0f4-4876-bd21-380f639e7983" />
+
+The advantage of using the _universal mapper_ (and defining new rules for it when needed) is that it supports by default the map depth system, with which you can alter the depth of the displayed map. Custom mappers need to support this system internally.
 
 Below is a simple example of adding _universal mapper_ support for TypeScript:
 
@@ -120,7 +126,7 @@ Add file extension (e.g. '_ts_') and name of the algorithm section to the `synta
                 ],
 ```
 
-Create a new `typescript` section an fill it with the the following content:
+Create a new `typescript` section and fill it with the following content:
 ```json
 "typescript": {
                 "regex":
@@ -144,29 +150,33 @@ Create a new `typescript` section an fill it with the the following content:
 
 And this is how the universal mapper settings are used at runtime:
 
-`"regex"`is  is a collection of regex matching definitions to test a given string against.
+`"regex"` is a collection of regex matching definitions to test a given string against.
 
-Each item (definition) consist of a few regex expressions to identify a syntax declaration
-and transform groom the regex match into a presentable item in the code map tree
+Each item (definition) consists of a few regex expressions to identify a syntax declaration
+and transform (groom) the regex match into a presentable item in the code map tree
 
     1. Pattern to detect if the string is a declaration (e.g. a class). It is if it matches the pattern
     2. Replacement pattern to be used against a declaration string
     3. Replacement value to be used against a declaration string
-    4. instead of testing string test its last matching+grooming result. Only applicable if multiple 
+    4. Instead of testing the string, test its last matching+grooming result. Only applicable if multiple 
        patterns are defined. 
-       Basically it is like this:
-         take the pattern def ind apply it on the string, save the matching result
-         take the next pattern and apply it to on the last match from the prev matching
+       Basically, it is like this:
+         Take the pattern def ind apply it to the string, save the matching result
+         Take the next pattern and apply it to the last match from the previous matching
          . . .
 
-Note the line text that is tested with regex is left trimmed before the test. Meaning that if your code has line 
+Note that the line text that is tested with regex is left trimmed before the test. Meaning that if your code has a line 
+
 ```
 "  say_hello():"
 ``` 
-the text that is tested with regex is 
+
+The text that is tested with regex is 
+
 ```
 "say_hello():"
-```   
+```
+
 Some further reading on the subject is [here](https://github.com/oleg-shilo/sublime-codemap/issues/37#issuecomment-776656432).
 
 <a name="map-depth"></a>
@@ -190,9 +200,9 @@ You can start keyboard navigation with **`Al+m, Alt+n`**. Then use the following
 <a name="settings"></a>
 ## Settings
 
-You can also configure plugin to:
+You can also configure the plugin to:
 1. Hide the group on closing the CodeMap view when it is the only view in the group.
-2. Always place CodeMap view in the individual most-right column.
+2. Always place the CodeMap view in the individual's most right column.
 3. CodeMap group width.
 4. Assign a custom font size/font face/margin for the CodeMap.
 
