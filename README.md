@@ -37,7 +37,7 @@ The design of plugin allows integration of the user defined _tree building_ algo
 <a name="installation"></a>
 ## Installation
 
-Note the plugin was developed and tested against ST3 but not ST2.
+Note: the plugin was developed and tested against Sublime Text v3 and higher (but not ST2).
 
 *__Package Control__*
 
@@ -56,7 +56,7 @@ You can also install the plugin by cloning `sublime-codemap` repository into you
 ## Usage
 The plugin uses a dedicated view group __Code - Map__ (on the right side) to mimic a "side bar" with the content (code tree) that represents code structure of the active view content in the primary view group.
 
-The code tree automatically refreshes on saving the active document or switching tabs. The usage is quite simple. You can double-click a node in the code tree and this will trigger navigation to the corresponding area in the code (in the active document). Alternatively, you can synchronise code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from _Command Palette_ or by the configured shortcut.
+The code tree automatically refreshes on saving the active document or switching tabs. The usage is quite simple. You can double-click a node in the code tree, and this will trigger navigation to the corresponding area in the code (in the active document). Alternatively, you can synchronise code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from _Command Palette_ or by the configured shortcut.
 
 To start working with CodeMap, just make the map view visible (e.g. [alt+m, alt+m]) and set the focus to the code view.
 
