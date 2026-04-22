@@ -441,7 +441,7 @@ def navigate_to_line(map_view, give_back_focus=False):
 
 class code_map_marshaler(sublime_plugin.WindowCommand):
     """This command marshals the specified routine call by wrapping it into the WindowCommand. It
-    allows the routine to be invoked either in the main ST thread or asynchronously from an
+    allows the routine to be invoked either in the editor's main thread or asynchronously from an
     alternate thread.
 
     Sample: code_map_marshaler.invoke(lambda: print('test'))
