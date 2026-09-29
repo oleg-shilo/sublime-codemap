@@ -68,14 +68,19 @@ class python_mapper():
                             line.split('(')[0].split(':')[0].rstrip(),
                             indent_level)
 
-                elif code_line.startswith('def '):
+                elif code_line.startswith('def ') or code_line.startswith('async def '):
+
                     if last_type == 'def' and indent_level > last_indent:
                         continue #local def
                     last_type = 'def'
                     last_indent = indent_level
+
+                    display_text = line.split('(')[0].rstrip()+'()'
+                    display_text = display_text.replace('async def ', 'def ')
+
                     info = (line_num,
                             'def',
-                            line.split('(')[0].rstrip()+'()',
+                            display_text,
                             indent_level)
 
                 if info:

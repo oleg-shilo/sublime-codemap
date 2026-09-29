@@ -10,7 +10,7 @@ from importlib.machinery import SourceFileLoader
 from .code_map_support import NavigateCodeMap as Nav
 from . import code_map_support as Mapper
 
-# version = 1.0.19
+# version = 1.0.20
 
 if sys.version_info < (3, 3):
     raise RuntimeError('CodeMap only works with Sublime Text 3 (or higher).')
@@ -517,6 +517,7 @@ class code_map_generator(sublime_plugin.TextCommand):
 
                     using_universal_mapper = False
                     script = mapper_path(extension)
+                    # print('def get mapper:', script)
                     mapper = SourceFileLoader(extension + "_mapper", script).load_module()
                     syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
 
@@ -579,22 +580,23 @@ class code_map_generator(sublime_plugin.TextCommand):
         source = args['source']
         map_syntax = py_syntax
         map = None
-        
+
+
         try:
             # it's the id of the temporary view
             if type(source) != str:
                 for v in sublime.active_window().views():
                     if v.id() == source:
                         (map, map_syntax) = code_map_generator.view_to_map(v)
-
             else:
                 # use temp map that has been generated, then delete it
+            
                 map = Generated_Map
                 Generated_Map = None
                 if not map:
                     # probably not necessary but to be sure
                     map = code_map_generator.get_mapper(source)
-
+                
                 """using_universal_mapper variable is set in get_mapper, when
                 it comes back here the script knows already where to go."""
 
