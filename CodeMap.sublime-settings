@@ -42,7 +42,7 @@
                         ["universal",     ""],
                         ["text",          "txt"],
                         ["Rexx",          "rex"],
-                        // ["python",        "py"],
+                        ["python",        "py"],
                         ["ruby",          "rb"],
                         ["Settings",      "sublime-settings"],
                         ["Syntax",        "sublime-syntax"],
