@@ -14,6 +14,14 @@
 import codecs
 import sublime
 
+# ================================
+# This is a default custom mapper that is included as part of the plugin distro. 
+# Set is_default_mapper to False if you are want to maintain this mapper by yourself 
+# (e.g. the mapper's updates will not be processed delivered automatically).
+is_default_mapper = True 
+mapper_version = "1.0"
+# ================================
+
 try:
     installed = sublime.load_settings('Package Control.sublime-settings').get('installed_packages')
 except:
