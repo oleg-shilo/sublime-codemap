@@ -65,6 +65,24 @@ class python_mapper():
                 line_num = line_num + 1
                 code_line = line.lstrip()
 
+                # skip empty lines
+                if not code_line:
+                    continue
+
+                # check for multiline string start/end
+                if not is_comment:
+                    if code_line.startswith('"""') or code_line.startswith("'''"):
+                        is_multiline_string = not is_multiline_string
+                    if is_multiline_string:
+                        continue
+                if code_line.startswith('#'):
+                    is_comment = True
+                else:
+                    is_comment = False
+
+                if is_comment or is_multiline_string:
+                    continue
+
                 info = None
                 indent_level = len(line) - len(code_line);
 
