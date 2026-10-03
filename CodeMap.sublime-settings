@@ -21,16 +21,15 @@
     //                                                                //
     //             Order of preference for mappers is:                //
     //                                                                //
-    //    1. defined mappers below, except "universal"                //
+    //    1. defined regex mappers below, except "universal" mapper   //
     //    2. mappers in User/CodeMap/custom_mappers                   //
     //    3. "universal" mapper (as a fallback)                       //
     //                                                                //
-    //                                                                //
     //    If a file extension is defined in "syntaxes" below, it WILL //
-    //    override custom mappers. To avoid this, if you want         //
-    //    to use a custom mapper for an extension defined there       //
-    //    (in "syntaxes"), you must comment out or delete the         //
-    //    extension from the "syntaxes" items below.                  //
+    //    take precedence over any custom mapper. To avoid this, if   //
+    //    you want to use a custom mapper for an extension defined    //
+    //    `mapper,extension` pair (in "syntaxes"), you must comment   //
+    //    it out (or delete) in "syntaxes" items below.               //
     //                                                                //
     ////////////////////////////////////////////////////////////////////
 
