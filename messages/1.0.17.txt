@@ -1,0 +1,4 @@
+Features/Changes:
+
+- #45: Fix outline not rendering when toggling (courtesy of klmp200)
+- Changed importing code_map_support to relative

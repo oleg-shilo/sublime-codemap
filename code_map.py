@@ -505,6 +505,22 @@ class code_map_generator(sublime_plugin.TextCommand):
                 # try with mappers defined in the settings first
                 # pass also the current view syntax, so that it will be checked too
                 mapper = Mapper.universal_mapper.evaluate(file, extension, view)
+
+                # go to custom mapper for the extension defined in the envar SUBLIME_CODEMAP_USE_CUSTOM_MAPPER_FOR
+                # this is to be used only for dev/debugging of stock custom mappers
+                forced_custom_mapper_extension = os.environ.get('SUBLIME_CODEMAP_USE_CUSTOM_MAPPER_FOR') 
+                
+                if forced_custom_mapper_extension and file.lower().endswith('.' + forced_custom_mapper_extension):
+                    try:
+                        using_universal_mapper = False  
+                        script = mapper_path(forced_custom_mapper_extension)
+                        mapper = SourceFileLoader(forced_custom_mapper_extension + '_mapper', script).load_module()
+                        syntax = mapper.map_syntax if hasattr(mapper, 'map_syntax') else py_syntax
+
+                        return mapper.generate, syntax
+                    except Exception as e:
+                        print(e)
+                
                 if mapper:
                     return mapper
 
@@ -580,7 +596,7 @@ class code_map_generator(sublime_plugin.TextCommand):
         source = args['source']
         map_syntax = py_syntax
         map = None
-
+        map_text = None
 
         try:
             # it's the id of the temporary view
@@ -588,6 +604,7 @@ class code_map_generator(sublime_plugin.TextCommand):
                 for v in sublime.active_window().views():
                     if v.id() == source:
                         (map, map_syntax) = code_map_generator.view_to_map(v)
+                        break
             else:
                 # use temp map that has been generated, then delete it
             
@@ -608,11 +625,11 @@ class code_map_generator(sublime_plugin.TextCommand):
                 defined here."""
 
                 if using_universal_mapper:
-                    (map, map_syntax) = map
+                    (map_text, map_syntax) = map
                 else:
                     (generate, map_syntax) = map
                     try:
-                        map = generate(source)
+                        map_text = generate(source)
                     except Exception as e:
                         print('Custom mapper failure')
                         raise e
@@ -625,12 +642,13 @@ class code_map_generator(sublime_plugin.TextCommand):
         if map_view == None:
             return
 
-        if map == None:
-            map = ''
+        if map_text == None:
+            map_text = ''
         
-        map = map.replace('<null>', "...")                
+        if isinstance(map_text, str):
+            map_text = map_text.replace('<null>', "...")                
 
-        map_view.replace(edit, all_text, map)
+        map_view.replace(edit, all_text, map_text)
         map_view.set_scratch(True)
         code_map_generator.source = source
 

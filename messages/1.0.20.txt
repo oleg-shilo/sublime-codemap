@@ -1,0 +1,4 @@
+Features/Changes:
+
+- #49: Python mapper ignores async def functions and methodsdone/waiting for releaseenhancement
+- #50: Python mapper lists class/def text inside docstrings and triple-quoted strings as real entries

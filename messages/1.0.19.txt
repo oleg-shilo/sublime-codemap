@@ -1,0 +1,4 @@
+Features/Changes:
+
+- Added git attribute images/ export- ignore
+- Renamed the internal parameter name async -> is_async as async became a keyword in the Python ST4
