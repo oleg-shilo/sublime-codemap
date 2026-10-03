@@ -91,6 +91,8 @@ In order to activate the mapper, its script needs to be properly named and place
 
   Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\md.py"`
 
+If the document extension that you want to be handled by the custom mapper happens to be handled by the stock universal (Regex) mapper then you will need to disable the stock mapper in teh plugin settings.
+
 You can associate a syntax with the custom mapper, so that the CodeMap will use it for rendering the map content. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself:
 ```Python
 map_syntax = 'Packages/Python/Python.tmLanguage'
