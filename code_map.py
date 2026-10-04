@@ -31,6 +31,21 @@ code_map_file = None
 # -------------------------
 
 
+def stock_mapper_needs_update(mapper_file):
+    if path.isfile(mapper_file):
+        # check if the mapper is a stock mapper by searching for the `is_stock_mapper = ...` 
+        # in the mapper code. If it is not a stock mapper but a user mapper then, we don't need to check its modification time.
+        with open(mapper_file, 'r') as f:
+            for line in f:
+                # if the line contains the stock mapper indicator, we need to check its modification time
+                if 'is_stock_mapper = False' in line:
+                    return False
+                elif 'is_stock_mapper = True' in line:
+                    return True
+        return True # the older mapper without any stock mapper indicator; treating it as a stock mapper
+    else:
+        return True
+
 def plugin_loaded():
     global ACTIVE, CUSTOM_MAPPERS, using_universal_mapper, code_map_file
 
@@ -42,7 +57,7 @@ def plugin_loaded():
     using_universal_mapper = True
     code_map_file = path.join(sublime.packages_path(), 'User', 'CodeMap', 'Code - Map')
 
-    default_mappers = ['md', 'py', 'ts']
+    stock_mappers = ['md', 'py', 'ts']
     custom_languages = ['md']
     Mapper.DEPTH = [settings().get('depth'), {}]
 
@@ -59,7 +74,7 @@ def plugin_loaded():
         os.mkdir(lng_dir)
 
     # rename legacy mappers (if any)
-    for syntax in default_mappers:
+    for syntax in stock_mappers:
         mapper_script = mapper_path(syntax)
         mapper_script_legacy = mapper_path(syntax, 'code_map.')
 
@@ -79,8 +94,8 @@ def plugin_loaded():
 
         zip = zipfile.ZipFile(pack)
 
-        for syntax in default_mappers:
-            if not path.isfile(mapper_path(syntax)):
+        for syntax in stock_mappers:
+            if stock_mapper_needs_update(mapper_path(syntax)):
                 zip.extract('custom_mappers/'+syntax+'.py', dst)
 
         for syntax in custom_languages:
@@ -95,11 +110,22 @@ def plugin_loaded():
         # package was installed manually
         plugin_dir = path.dirname(__file__)
 
-        for syntax in default_mappers:
+        for syntax in stock_mappers:
             src_mapper = path.join(plugin_dir, 'custom_mappers', syntax+'.py')
             dst_mapper = mapper_path(syntax)
-            if not path.isfile(dst_mapper):
+            if stock_mapper_needs_update(dst_mapper):
+                # check if the destination mapper has the same timestamp as the plugin
+                if path.isfile(dst_mapper):
+                    src_mtime = path.getmtime(src_mapper)
+                    dst_mtime = path.getmtime(dst_mapper)
+                    if dst_mtime == src_mtime: # will also restore any accidental user change of the stock implementation
+                        continue
+                
+                print("Updating stock mapper:", dst_mapper)
                 shutil.copyfile(src_mapper, dst_mapper)
+
+                # set the modification time of the destination file to match the source file
+                os.utime(dst_mapper, (src_mtime, src_mtime))
 
         for syntax in custom_languages:
             src_syntax = path.join(plugin_dir, 'custom_languages', syntax+'.sublime-syntax')

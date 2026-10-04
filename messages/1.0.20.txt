@@ -2,3 +2,4 @@ Features/Changes:
 
 - #49: Python mapper ignores async def functions and methodsdone/waiting for releaseenhancement
 - #50: Python mapper lists class/def text inside docstrings and triple-quoted strings as real entries
+- #51: Bundled mappers are copied to User/CodeMap once and never refreshed or removed: updates/fixes never reach existing users; uninstall leaves files

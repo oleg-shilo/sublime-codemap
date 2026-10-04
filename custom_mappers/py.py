@@ -15,11 +15,9 @@ import codecs
 import sublime
 
 # ================================
-# This is a default custom mapper that is included as part of the plugin distro. 
-# Set is_default_mapper to False if you are want to maintain this mapper by yourself 
-# (e.g. the mapper's updates will not be processed delivered automatically).
-is_default_mapper = True 
-mapper_version = "1.0"
+# This is a stock custom mapper that is included in the plugin distro. Set is_stock_mapper to False 
+# if you want to maintain this mapper by yourself so the plugin updates do not overwrite it.
+is_stock_mapper = True 
 # ================================
 
 try:
@@ -60,6 +58,9 @@ class python_mapper():
             line_num = 0
             last_type = ''
             last_indent = 0
+            is_comment = False
+            is_multiline_string = False
+
             for line in lines:
                 line = line.replace('\t', '    ')
                 line_num = line_num + 1

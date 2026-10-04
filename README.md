@@ -80,6 +80,15 @@ Default keybinding is **`Alt+m  Alt+,`**
 <a name="custom-mapping"></a>
 ## Custom mapping
 
+### Summary
+
+1. Universal mapper: a Regex-based mapper for a specific document type (syntax)
+    - _Stock universal mappers_: mappers that come with the plugin distro in the form of sections in the plugin's settings for: `*.txt, *.rex, *.py, *.rb, *.sublime-settings, *.sublime-syntax, *.ini`
+    Can be overwritten or extended in the user settings.
+2. Custom mapper: a dedicated Python script mapper for a specific document type
+    - _Stock custom mappers_: python script mappers (`py.py, md.py, ts.py`) that come with the plugin distro and deployed to the `Sublime Text\Packages\User\CodeMap\custom_mappers`.
+    Can be edited or added by the user in the custom_mappers folder.
+
 <a name="custom-mapper"></a>
 ### Custom mapper
 
@@ -93,10 +102,17 @@ In order to activate the mapper, its script needs to be properly named and place
 
 If the document extension that you want to be handled by the custom mapper happens to be handled by the stock universal (Regex) mapper then you will need to disable the stock mapper in teh plugin settings.
 
+#### Default Custom Mappers Lifecycle  
+
+If you decide that you want to replace the default custom mapper and fully manage its updates you will need to indicate it in teh header of the file with `is_default_mapper = False`. Otherwise the file is replaced by the plugin on updates.
+
+
 You can associate a syntax with the custom mapper, so that the CodeMap will use it for rendering the map content. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself:
+
 ```Python
 map_syntax = 'Packages/Python/Python.tmLanguage'
 ```
+
 Python syntax seems to be a good highlighting schema for the majority of mapping scenarios.
 
 <a name="universal-mapper"></a>
@@ -104,7 +120,7 @@ Python syntax seems to be a good highlighting schema for the majority of mapping
 
 The _universal mapper_ is a generic Regex-based mapper that can be used as an alternative to dedicated custom mappers. The mapping algorithm(s) of the _universal mapper_ is defined in the plugin settings and are extension-dependent. Access plugin settings via `Preferences > Package Settings > CodeMap > Edit Settings`.
 
-The plugin will always try to use the _universal mapper_ mapping algorithm first, and only if it's not available, the plugin will try to locate a dedicated custom mapper based on the active document file extension. 
+The plugin will always try to use the _universal mapper_ mapping algorithm first, and only if it's not available, the plugin will try to locate a dedicated custom mapper based on the active document file extension.
 
 The _universal mapper_ is invoked based on the regular expression patterns defined in the specific section of the mapper. This section is mapped to the document file extension that is defined in the `"syntaxes"` dictionary (another section in the settings file). Thus, the mapping resolution steps can be illustrated as follows: `file-extension > syntaxes > syntax-section > regex-patterns`
 
