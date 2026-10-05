@@ -15,9 +15,9 @@
 import codecs
 
 # ================================
-# This is a stock custom mapper that is included in the plugin distro. Set is_stock_mapper to False 
-# if you want to maintain this mapper by yourself so the plugin updates do not overwrite it.
-is_stock_mapper = True 
+# This is a stock custom mapper that is included as part of the plugin distro. Set is_stock_mapper to False if 
+# you are want to maintain this mapper by yourself. (e.g. the mapper's updates will not update this file)
+is_stock_mapper = True
 # ================================
 
 # you can create custom syntaxes for codemap visuals, this is an example
