@@ -7,16 +7,17 @@ A plugin for displaying the code map (code structure tree) in the [Sublime Text 
 
 This plugin is a port of [PyMap](https://marketplace.visualstudio.com/items?itemName=OlegShilo.PyMap), a Visual Studio extension.
 
-Plugin currently supports building the code tree for: 
+Plugin currently supports building the code tree for:
+
 - Python
-- C# 
+- C#
 - text file
 - Rexx
 - Ruby
 - JSON
 - YAML
 - Ini
- 
+
 The design of plugin allows integration of the user defined _tree building_ algorithm for other languages. The _custom syntax_ integration infrastructure and and samples will  be available in the next release.
 
 <!-- MarkdownTOC -->
@@ -25,35 +26,37 @@ The design of plugin allows integration of the user defined _tree building_ algo
 - [Usage](#usage)
 - [Command Palette](#command-palette)
 - [Custom mapping](#custom-mapping)
-    - [Custom mapper](#custom-mapper)
-    - [Universal Mapper](#universal-mapper)
-    - [Map depth](#map-depth)
+  - [Custom mapper](#custom-mapper)
+  - [Universal Mapper](#universal-mapper)
+  - [Map depth](#map-depth)
 - [Navigation with Keyboard](#navigation-with-keyboard)
 - [Settings](#settings)
 
 <!-- /MarkdownTOC -->
-
 
 <a name="installation"></a>
 ## Installation
 
 Note: the plugin was developed and tested against Sublime Text v3 and higher (but not ST2).
 
-*__Package Control__*
+___Package Control___
 
 You can install the plugin [Package Control](https://packagecontrol.io/packages/CodeMap).
 
-*__Manual__*
+_NOTE_: Plugin creates custom user data folders in the user package profile. These folders are not deleted as part of the removing the package through Package Control. Thus you will need to delete `Packages/User/CodeMap` manually after removal of the package unless you intent to keep your custom data.  
 
-* Remove the package, if installed, using Package Control.
-* Add a repository: `https://github.com/oleg-shilo/sublime-codemap.git`
-* Install `sublime-codemap` with Package Control.
-* Restart the Sublime editor if required
+___Manual___
+
+- Remove the package, if installed, using Package Control.
+- Add a repository: `https://github.com/oleg-shilo/sublime-codemap.git`
+- Install `sublime-codemap` with Package Control.
+- Restart the Sublime editor if required
 
 You can also install the plugin by cloning `sublime-codemap` repository into your Packages folder or manually placing the downloaded package there.
 
 <a name="usage"></a>
 ## Usage
+
 The plugin uses a dedicated view group __Code - Map__ (on the right side) to mimic a "side bar" with the content (code tree) that represents code structure of the active view content in the primary view group.
 
 The code tree automatically refreshes on saving the active document or switching tabs. The usage is quite simple. You can double-click a node in the code tree, and this will trigger navigation to the corresponding area in the code (in the active document). Alternatively, you can synchronise code tree node selection with the current caret position in the document by triggering `sync_code_map` command either from _Command Palette_ or by the configured shortcut.
@@ -67,15 +70,15 @@ To start working with CodeMap, just make the map view visible (e.g. [alt+m, alt+
 
 Press `cmd+shift+p`. Type `codemap` to see the available commands:
 
-* *__Toggle Visibility__* - Show/Hide CodeMap view.
+- ___Toggle Visibility___ - Show/Hide CodeMap view.
 The CodeMap view is always placed in the rightmost column (group) of the active window. If `show_in_new_group` is set to `true`, a new group will be created.  
-Default keybinding is **`Alt+m  Alt+m`**
+Default keybinding is __`Alt+m  Alt+m`__
 
-* *__Reveal in CodeMap__* - Select code tree node that corresponds to the caret position in the code (active view).  
-Default keybinding is **`Alt+m  Alt+.`**
+- ___Reveal in CodeMap___ - Select code tree node that corresponds to the caret position in the code (active view).  
+Default keybinding is __`Alt+m  Alt+.`__
 
-* *__Render From View__* - Attempt to render CodeMap from a view that isn't bound to a physical file.  
-Default keybinding is **`Alt+m  Alt+,`**
+- ___Render From View___ - Attempt to render CodeMap from a view that isn't bound to a physical file.  
+Default keybinding is __`Alt+m  Alt+,`__
 
 <a name="custom-mapping"></a>
 ## Custom mapping
@@ -100,12 +103,11 @@ In order to activate the mapper, its script needs to be properly named and place
 
   Example: `"%APPDATA%\Sublime Text 3\Packages\User\CodeMap\custom_mappers\md.py"`
 
-If the document extension that you want to be handled by the custom mapper happens to be handled by the stock universal (Regex) mapper then you will need to disable the stock mapper in teh plugin settings.
+If the document extension that you want to be handled by the custom mapper happens to be handled by the stock universal (Regex) mapper then you will need to disable the stock mapper in the plugin settings.
 
 #### Default Custom Mappers Lifecycle  
 
-If you decide that you want to replace the default custom mapper and fully manage its updates you will need to indicate it in teh header of the file with `is_default_mapper = False`. Otherwise the file is replaced by the plugin on updates.
-
+If you decide that you want to replace the default custom mapper and fully manage its updates you will need to indicate it in the header of the file with `is_stock_mapper = False`. Otherwise the file is replaced by the plugin on updates.
 
 You can associate a syntax with the custom mapper, so that the CodeMap will use it for rendering the map content. Custom syntaxes can also be put in `Packages\User\CodeMap\custom_languages`. The syntax association must be specified in the custom mapper itself:
 
@@ -135,6 +137,7 @@ The advantage of using the _universal mapper_ (and defining new rules for it whe
 Below is a simple example of adding _universal mapper_ support for TypeScript:
 
 Add file extension (e.g. '_ts_') and name of the algorithm section to the `syntaxes` section:
+
 ```json
 "syntaxes":     [
                         ["universal",   ""],
@@ -145,6 +148,7 @@ Add file extension (e.g. '_ts_') and name of the algorithm section to the `synta
 ```
 
 Create a new `typescript` section and fill it with the following content:
+
 ```json
 "typescript": {
                 "regex":
@@ -173,25 +177,27 @@ And this is how the universal mapper settings are used at runtime:
 Each item (definition) consists of a few regex expressions to identify a syntax declaration
 and transform the regex match into a presentable item in the code map tree
 
-    1. Pattern to detect if the string is a declaration (e.g. a class). It is if it matches the pattern
-    2. Replacement pattern to be used against a declaration string
-    3. Replacement value to be used against a declaration string
-    4. Instead of testing the string, test its last matching+transformation result. Only applicable if multiple 
-       patterns are defined. 
-       Basically, it is like this:
-         Take the pattern def ind apply it to the string, save the matching result
-         Take the next pattern and apply it to the last match from the previous matching
-         . . .
+```txt
+1. Pattern to detect if the string is a declaration (e.g. a class). It is if it matches the pattern
+2. Replacement pattern to be used against a declaration string
+3. Replacement value to be used against a declaration string
+4. Instead of testing the string, test its last matching+transformation result. Only applicable if multiple 
+   patterns are defined. 
+   Basically, it is like this:
+     Take the pattern def ind apply it to the string, save the matching result
+     Take the next pattern and apply it to the last match from the previous matching
+     . . .
+```
 
 Note that the line text that is tested with regex is left trimmed before the test. Meaning that if your code has a line.
 
-```
+```txt
 "  say_hello():"
-``` 
+```
 
 The text that is tested with regex is 
 
-```
+```txt
 "say_hello():"
 ```
 
@@ -202,23 +208,27 @@ Some further reading on the subject is [here](https://github.com/oleg-shilo/subl
 
 If using the _universal mapper_ or a dedicated mapper that supports it, you can change the depth of the displayed map. Default hotkeys are:
 
-    { "keys": ["alt+m", "alt+left"], "command": "code_map_decrease_depth" },
-    { "keys": ["alt+m", "alt+right"],"command": "code_map_increase_depth" },
-
+```txt
+{ "keys": ["alt+m", "alt+left"], "command": "code_map_decrease_depth" },
+{ "keys": ["alt+m", "alt+right"],"command": "code_map_increase_depth" },
+```
 
 <a name="navigation-with-keyboard"></a>
 ## Navigation with Keyboard
 
 You can start keyboard navigation with **`Al+m, Alt+n`**. Then use the following keys: 
 
-    up / down                   move by definition
-    alt+up / alt+down           move by class
-    enter/escape/left/right     focus back on edited view
-    
+```txt
+up / down                   move by definition
+alt+up / alt+down           move by class
+enter/escape/left/right     focus back on edited view
+```
+
 <a name="settings"></a>
 ## Settings
 
 You can also configure the plugin to:
+
 1. Hide the group on closing the CodeMap view when it is the only view in the group.
 2. Always place the CodeMap view in the individual's most right column.
 3. CodeMap group width.
